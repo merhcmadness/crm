@@ -113,6 +113,19 @@
         </template>
       </SidebarLink>
       <SidebarLink
+        :label="__('Raven')"
+        :isCollapsed="isSidebarCollapsed"
+        @click="toggleRaven"
+      >
+        <template #icon>
+          <span class="grid h-4 w-4 flex-shrink-0 place-items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+            </svg>
+          </span>
+        </template>
+      </SidebarLink>
+      <SidebarLink
         :label="isSidebarCollapsed ? __('Expand') : __('Collapse')"
         :isCollapsed="isSidebarCollapsed"
         class=""
@@ -127,6 +140,21 @@
           </span>
         </template>
       </SidebarLink>
+    </div>
+    <!-- Raven panel -->
+    <div
+      v-if="ravenOpen"
+      class="fixed bottom-16 left-14 z-50 flex flex-col rounded-xl shadow-2xl overflow-hidden"
+      style="width: 420px; height: 600px;"
+    >
+      <div class="flex items-center justify-between bg-ink-gray-9 px-4 py-2">
+        <span class="text-sm font-medium text-white">Raven</span>
+        <div class="flex items-center gap-2">
+          <button class="text-white opacity-70 hover:opacity-100 text-xs" @click="openRavenFullscreen">↗</button>
+          <button class="text-white opacity-70 hover:opacity-100" @click="ravenOpen = false">✕</button>
+        </div>
+      </div>
+      <iframe :src="ravenUrl" class="flex-1 w-full border-0 bg-white" allow="microphone" />
     </div>
     <Notifications />
     <Settings />
@@ -208,6 +236,11 @@ const { clearDemoData, isDemoDataCreated } = useDemoData()
 const { send } = useBroadcast()
 
 const isSidebarCollapsed = useStorage('isSidebarCollapsed', false)
+
+const ravenOpen = ref(false)
+const ravenUrl = `${window.location.origin}/raven`
+function toggleRaven() { ravenOpen.value = !ravenOpen.value }
+function openRavenFullscreen() { window.open(ravenUrl, '_blank') }
 
 const isFCSite = ref(window.is_fc_site)
 const isDemoSite = ref(window.is_demo_site)

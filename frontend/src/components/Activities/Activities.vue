@@ -109,12 +109,7 @@
           @reload="all_activities.reload() && scroll()"
         />
       </div>
-      <div
-        v-else-if="title == 'ERPNext'"
-        class="px-3 pb-3 sm:px-10 sm:pb-5 pt-4"
-      >
-        <ERPNextLinks :dealId="docname" :dealStatus="doc.status" />
-      </div>
+
       <template v-else>
         <div
           v-for="(activity, i) in activities"
@@ -406,6 +401,12 @@
         @beforeSave="(data) => emit('beforeSave', data)"
         @afterSave="(data) => emit('afterSave', data)"
       />
+    </div>
+    <div
+      v-else-if="title == 'ERPNext'"
+      class="px-3 pb-3 sm:px-10 sm:pb-5 pt-4"
+    >
+      <ERPNextLinks :dealId="docname" :dealStatus="doc.status" />
     </div>
     <EmptyState
       v-else

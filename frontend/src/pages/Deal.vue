@@ -333,9 +333,7 @@
     v-model="showLostReasonModal"
     doctype="CRM Deal"
     :document="document"
-  />
-  <RavenButton />
-</template>
+  /></template>
 <script setup>
 import DeleteLinkedDocModal from '@/components/DeleteLinkedDocModal.vue'
 import ErrorPage from '@/components/ErrorPage.vue'
@@ -362,7 +360,6 @@ import Activities from '@/components/Activities/Activities.vue'
 import OrganizationModal from '@/components/Modals/OrganizationModal.vue'
 import LostReasonModal from '@/components/Modals/LostReasonModal.vue'
 import ERPNextLinks from '@/components/ERPNextLinks.vue'
-import RavenButton from '@/components/RavenButton.vue'
 import AssignTo from '@/components/AssignTo.vue'
 import FilesUploader from '@/components/FilesUploader/FilesUploader.vue'
 import ContactModal from '@/components/Modals/ContactModal.vue'
