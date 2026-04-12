@@ -154,7 +154,7 @@
           <button class="text-white opacity-70 hover:opacity-100" @click="ravenOpen = false">✕</button>
         </div>
       </div>
-      <iframe :src="ravenUrl" class="flex-1 w-full border-0 bg-white" allow="microphone" />
+      <iframe :src="ravenUrl" class="flex-1 w-full border-0" allow="microphone" @load="onRavenLoad" />
     </div>
     <Notifications />
     <Settings />
@@ -239,6 +239,24 @@ const isSidebarCollapsed = useStorage('isSidebarCollapsed', false)
 
 const ravenOpen = ref(false)
 const ravenUrl = `${window.location.origin}/raven`
+
+function syncRavenTheme(iframe) {
+  try {
+    let currentTheme = document.documentElement.getAttribute('data-theme')
+    if (!currentTheme || currentTheme === 'system') {
+      currentTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    }
+    iframe.contentDocument.documentElement.setAttribute('data-theme', currentTheme)
+  } catch (e) {}
+}
+
+function onRavenLoad(e) {
+  syncRavenTheme(e.target)
+  // Watch for theme changes on the CRM side
+  const observer = new MutationObserver(() => syncRavenTheme(e.target))
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+}
+
 function toggleRaven() { ravenOpen.value = !ravenOpen.value }
 function openRavenFullscreen() { window.open(ravenUrl, '_blank') }
 
