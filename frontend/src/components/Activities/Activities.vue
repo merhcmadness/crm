@@ -62,7 +62,7 @@
                 <CommentIcon class="text-ink-gray-8" />
               </div>
             </div>
-            <CommentArea class="mb-4" :activity="comment" />
+            <CommentArea v-model="all_activities" class="mb-4" :activity="comment" />
           </div>
         </div>
       </div>
@@ -108,6 +108,12 @@
           :attachments="activities"
           @reload="all_activities.reload() && scroll()"
         />
+      </div>
+      <div
+        v-else-if="title == 'ERPNext'"
+        class="px-3 pb-3 sm:px-10 sm:pb-5 pt-4"
+      >
+        <ERPNextLinks :dealId="docname" :dealStatus="doc.status" />
       </div>
       <template v-else>
         <div
@@ -186,7 +192,7 @@
             :id="activity.name"
             class="mb-4"
           >
-            <CommentArea :activity="activity" />
+            <CommentArea v-model="all_activities" :activity="activity" />
           </div>
           <div
             v-else-if="activity.activity_type == 'attachment_log'"
@@ -232,6 +238,19 @@
             class="mb-4"
           >
             <CallArea :activity="activity" />
+          </div>
+          <div
+            v-else-if="activity.activity_type == 'note'"
+            class="mb-4 cursor-pointer"
+            @click="modalRef.showNote(activity)"
+          >
+            <NoteArea v-model="all_activities" :note="activity" />
+          </div>
+          <div
+            v-else-if="activity.activity_type == 'task'"
+            class="mb-4"
+          >
+            <TaskArea :modalRef="modalRef" :tasks="[activity]" :doctype="doctype" />
           </div>
           <div v-else class="mb-4 flex flex-col gap-2 py-1.5">
             <div class="flex items-center justify-stretch gap-2 text-base">
@@ -447,6 +466,7 @@ import CallArea from '@/components/Activities/CallArea.vue'
 import NoteArea from '@/components/Activities/NoteArea.vue'
 import TaskArea from '@/components/Activities/TaskArea.vue'
 import AttachmentArea from '@/components/Activities/AttachmentArea.vue'
+import ERPNextLinks from '@/components/ERPNextLinks.vue'
 import DataFields from '@/components/Activities/DataFields.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import ActivityIcon from '@/components/Icons/ActivityIcon.vue'
@@ -600,9 +620,29 @@ const replyMessage = ref({})
 
 function get_activities() {
   if (!all_activities.data?.versions) return []
-  if (!all_activities.data?.calls.length)
-    return all_activities.data.versions || []
-  return [...all_activities.data.versions, ...all_activities.data.calls]
+  let result = [...(all_activities.data.versions || [])]
+  if (all_activities.data?.calls?.length) {
+    result = [...result, ...all_activities.data.calls]
+  }
+  if (all_activities.data?.notes?.length) {
+    result = [
+      ...result,
+      ...all_activities.data.notes.map((note) => ({
+        ...note,
+        activity_type: 'note',
+      })),
+    ]
+  }
+  if (all_activities.data?.tasks?.length) {
+    result = [
+      ...result,
+      ...all_activities.data.tasks.map((task) => ({
+        ...task,
+        activity_type: 'task',
+      })),
+    ]
+  }
+  return result
 }
 
 const activities = computed(() => {
@@ -652,7 +692,9 @@ const activities = computed(() => {
       })
     }
   })
-  return sortByCreation(_activities)
+  return title.value === 'Activity'
+    ? sortByCreation(_activities).reverse()
+    : sortByCreation(_activities)
 })
 
 function sortByCreation(list) {
@@ -780,6 +822,12 @@ function timelineIcon(activity_type, is_lead) {
       break
     case 'attachment_log':
       icon = AttachmentIcon
+      break
+    case 'note':
+      icon = NoteIcon
+      break
+    case 'task':
+      icon = TaskIcon
       break
     default:
       icon = DotIcon

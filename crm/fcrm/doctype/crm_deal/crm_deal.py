@@ -77,6 +77,26 @@ class CRMDeal(Document):
 		website: DF.Data | None
 	# end: auto-generated types
 
+
+	def auto_create_project(self):
+		"""Auto-create an ERPNext Project when deal is marked as Won"""
+		if not frappe.db.table_exists("Project"):
+			return
+		existing = frappe.get_all("Project", filters={"crm_deal": self.name}, limit=1)
+		if existing:
+			return
+		try:
+			project = frappe.new_doc("Project")
+			project.project_name = self.custom_deal_name if hasattr(self, "custom_deal_name") and self.custom_deal_name else (self.organization or self.name)
+			project.crm_deal = self.name
+			project.expected_start_date = frappe.utils.nowdate()
+			if self.expected_closure_date:
+				project.expected_end_date = self.expected_closure_date
+			project.insert(ignore_permissions=True)
+			frappe.db.commit()
+		except Exception:
+			pass
+
 	def before_validate(self):
 		self.set_sla()
 
@@ -91,6 +111,7 @@ class CRMDeal(Document):
 			add_status_change_log(self)
 			if frappe.db.get_value("CRM Deal Status", self.status, "type") == "Won":
 				self.closed_date = frappe.utils.nowdate()
+				self.auto_create_project()
 		self.validate_forecasting_fields()
 		self.validate_lost_reason()
 		self.update_exchange_rate()

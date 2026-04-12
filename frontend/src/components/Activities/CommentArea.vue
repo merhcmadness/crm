@@ -11,12 +11,28 @@
           {{ __('comment') }}
         </span>
       </div>
-      <div class="ml-auto whitespace-nowrap">
+      <div class="ml-auto flex items-center gap-2 whitespace-nowrap">
         <Tooltip :text="formatDate(activity.creation)">
           <div class="text-sm text-ink-gray-5">
             {{ __(timeAgo(activity.creation)) }}
           </div>
         </Tooltip>
+        <Dropdown
+          :options="[
+            {
+              label: __('Delete'),
+              icon: 'trash-2',
+              onClick: () => deleteComment(activity.name),
+            },
+          ]"
+          class="h-6 w-6"
+        >
+          <Button
+            icon="more-horizontal"
+            variant="ghosted"
+            class="!h-6 !w-6"
+          />
+        </Dropdown>
       </div>
     </div>
     <div
@@ -37,10 +53,27 @@
 <script setup>
 import UserAvatar from '@/components/UserAvatar.vue'
 import AttachmentItem from '@/components/AttachmentItem.vue'
-import { Tooltip } from 'frappe-ui'
+import { Tooltip, Dropdown, Button, call, toast } from 'frappe-ui'
 import { timeAgo, formatDate } from '@/utils'
 
 defineProps({
   activity: { type: Object, default: () => ({}) },
 })
+
+const activities = defineModel({ type: Object })
+
+async function deleteComment(name) {
+  await toast.promise(
+    call('frappe.client.delete', {
+      doctype: 'Comment',
+      name,
+    }),
+    {
+      loading: __('Deleting comment...'),
+      success: __('Comment deleted'),
+      error: __('Failed to delete comment'),
+    },
+  )
+  activities.value?.reload()
+}
 </script>
