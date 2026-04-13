@@ -85,22 +85,71 @@
           {{ __('No linked documents') }}
         </div>
 
-        <Button
-          v-if="dealStatus === 'Won' && !docs.projects?.length"
-          class="mt-2 w-full"
-          variant="subtle"
-          :label="__('Create Project')"
-          :loading="creatingProject"
-          @click="createProject"
-        />
+        <!-- Action buttons -->
+        <div class="flex flex-col gap-2 mt-2">
+          <Button
+            class="w-full"
+            variant="subtle"
+            :label="__('New Quotation')"
+            :loading="creatingQuotation"
+            @click="createQuotation"
+          />
+          <Button
+            v-if="dealStatus === 'Won'"
+            class="w-full"
+            variant="subtle"
+            :label="__('Create DP Invoice')"
+            :loading="creatingDPInvoice"
+            @click="showDPDialog = true"
+          />
+          <Button
+            v-if="dealStatus === 'Won' && !docs.projects?.length"
+            class="w-full"
+            variant="subtle"
+            :label="__('Create Project')"
+            :loading="creatingProject"
+            @click="createProject"
+          />
+        </div>
       </template>
     </div>
+
+    <!-- DP Invoice Dialog -->
+    <Dialog v-model="showDPDialog" :options="{ title: __('Create Down Payment Invoice') }">
+      <template #body-content>
+        <div class="flex flex-col gap-3">
+          <div>
+            <label class="text-sm text-ink-gray-6 mb-1 block">{{ __('Customer PO Number') }}</label>
+            <input
+              v-model="dpPoNo"
+              type="text"
+              class="w-full border border-outline-gray-2 rounded px-3 py-2 text-sm"
+              :placeholder="__('e.g. PO-2024-001')"
+            />
+          </div>
+          <div>
+            <label class="text-sm text-ink-gray-6 mb-1 block">{{ __('Down Payment %') }}</label>
+            <input
+              v-model="dpPercent"
+              type="number"
+              min="1"
+              max="100"
+              class="w-full border border-outline-gray-2 rounded px-3 py-2 text-sm"
+            />
+          </div>
+        </div>
+      </template>
+      <template #actions>
+        <Button variant="solid" :label="__('Create Invoice')" :loading="creatingDPInvoice" @click="createDPInvoice" />
+        <Button variant="subtle" :label="__('Cancel')" @click="showDPDialog = false" />
+      </template>
+    </Dialog>
   </div>
 </template>
 
 <script setup>
 import LoadingIndicator from '@/components/Icons/LoadingIndicator.vue'
-import { createResource, Badge, Button, call, toast } from 'frappe-ui'
+import { createResource, Badge, Button, Dialog, call, toast } from 'frappe-ui'
 import { ref, computed } from 'vue'
 
 const props = defineProps({
@@ -110,6 +159,11 @@ const props = defineProps({
 
 const opened = ref(true)
 const creatingProject = ref(false)
+const creatingQuotation = ref(false)
+const creatingDPInvoice = ref(false)
+const showDPDialog = ref(false)
+const dpPercent = ref(50)
+const dpPoNo = ref('')
 
 const linkedDocs = createResource({
   url: 'crm.api.erpnext_links.get_linked_docs',
@@ -133,9 +187,42 @@ function statusTheme(status) {
 
 function formatCurrency(amount, currency) {
   if (!amount) return ''
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency', currency: currency || 'USD', maximumFractionDigits: 0,
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency', currency: currency || 'IDR', maximumFractionDigits: 0,
   }).format(amount)
+}
+
+async function createQuotation() {
+  creatingQuotation.value = true
+  try {
+    const name = await call('merch_madness_customizations.api.crm.create_quotation_from_deal', { deal: props.dealId })
+    toast.success(__('Quotation created: ') + name)
+    linkedDocs.reload()
+    openDoc('quotation', name)
+  } catch (e) {
+    toast.error(e.messages?.[0] || __('Failed to create quotation'))
+  } finally {
+    creatingQuotation.value = false
+  }
+}
+
+async function createDPInvoice() {
+  creatingDPInvoice.value = true
+  try {
+    const result = await call('merch_madness_customizations.api.crm.create_dp_invoice', {
+      deal: props.dealId,
+      dp_percent: dpPercent.value,
+      po_no: dpPoNo.value,
+    })
+    toast.success(__('DP Invoice created: ') + result.name)
+    showDPDialog.value = false
+    linkedDocs.reload()
+    openDoc('sales-invoice', result.name)
+  } catch (e) {
+    toast.error(e.messages?.[0] || __('Failed to create DP invoice'))
+  } finally {
+    creatingDPInvoice.value = false
+  }
 }
 
 async function createProject() {
