@@ -192,6 +192,18 @@
     :docname="props.organizationId"
     name="Organizations"
   />
+  <DealModal
+    v-if="showDealModal"
+    v-model="showDealModal"
+    :defaults="dealDefaults"
+    @after-insert="deals.reload()"
+  />
+  <ContactModal
+    v-if="showContactModal"
+    v-model="showContactModal"
+    :defaults="contactDefaults"
+    @after-insert="contacts.reload()"
+  />
 </template>
 
 <script setup>
@@ -208,6 +220,8 @@ import DealsIcon from '@/components/Icons/DealsIcon.vue'
 import ContactsIcon from '@/components/Icons/ContactsIcon.vue'
 import DeleteLinkedDocModal from '@/components/DeleteLinkedDocModal.vue'
 import CustomActions from '@/components/CustomActions.vue'
+import DealModal from '@/components/Modals/DealModal.vue'
+import ContactModal from '@/components/Modals/ContactModal.vue'
 import { showAddressModal, addressProps } from '@/composables/modals'
 import { useDocument } from '@/data/document'
 import { getSettings } from '@/stores/settings'
@@ -571,25 +585,18 @@ const contactColumns = [
   },
 ]
 
-async function createDeal() {
-  const doc = await call('frappe.client.insert', {
-    doc: {
-      doctype: 'CRM Deal',
-      organization: props.organizationId,
-      status: 'Open',
-    },
-  })
-  router.push({ name: 'Deal', params: { dealId: doc.name } })
+const showDealModal = ref(false)
+const dealDefaults = { organization: props.organizationId }
+
+function createDeal() {
+  showDealModal.value = true
 }
 
-async function createContact() {
-  const doc = await call('frappe.client.insert', {
-    doc: {
-      doctype: 'Contact',
-      company_name: props.organizationId,
-    },
-  })
-  router.push({ name: 'Contact', params: { contactId: doc.name } })
+const showContactModal = ref(false)
+const contactDefaults = { company_name: props.organizationId }
+
+function createContact() {
+  showContactModal.value = true
 }
 
 function openAddressModal(_address) {
