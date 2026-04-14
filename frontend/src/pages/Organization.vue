@@ -141,13 +141,22 @@
         </button>
       </template>
       <template #tab-panel="{ tab }">
-        <div class="flex justify-end px-5 pt-3" v-if="tab.label === 'Deals'">
+        <div class="flex justify-end px-5 pt-3" v-if="tab.label === 'Deals' || tab.label === 'Contacts'">
           <Button
+            v-if="tab.label === 'Deals'"
             :label="__('New Deal')"
             icon-left="plus"
             size="sm"
             variant="solid"
             @click="createDeal"
+          />
+          <Button
+            v-if="tab.label === 'Contacts'"
+            :label="__('New Contact')"
+            icon-left="plus"
+            size="sm"
+            variant="solid"
+            @click="createContact"
           />
         </div>
         <DealsListView
@@ -164,14 +173,9 @@
           :columns="columns"
           :options="{ selectable: false, showTooltip: false }"
         />
-        <EmptyState
-          v-if="!rows.length && tab.label !== 'Deals'"
-          :icon="tab.icon"
-          :name="__(tab.label)"
-        />
-        <div v-if="!rows.length && tab.label === 'Deals'" class="flex flex-1 flex-col items-center justify-center gap-3 text-ink-gray-4">
+        <div v-if="!rows.length" class="flex flex-1 flex-col items-center justify-center gap-3 text-ink-gray-4">
           <component :is="tab.icon" class="h-12 w-12" />
-          <span class="text-base">{{ __('No Deals Found') }}</span>
+          <span class="text-base">{{ __('No') }} {{ __(tab.label) }} {{ __('Found') }}</span>
         </div>
       </template>
     </Tabs>
@@ -576,6 +580,16 @@ async function createDeal() {
     },
   })
   router.push({ name: 'Deal', params: { dealId: doc.name } })
+}
+
+async function createContact() {
+  const doc = await call('frappe.client.insert', {
+    doc: {
+      doctype: 'Contact',
+      company_name: props.organizationId,
+    },
+  })
+  router.push({ name: 'Contact', params: { contactId: doc.name } })
 }
 
 function openAddressModal(_address) {
