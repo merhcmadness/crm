@@ -141,6 +141,15 @@
         </button>
       </template>
       <template #tab-panel="{ tab }">
+        <div class="flex justify-end px-5 pt-3" v-if="tab.label === 'Deals'">
+          <Button
+            :label="__('New Deal')"
+            icon-left="plus"
+            size="sm"
+            variant="solid"
+            @click="createDeal"
+          />
+        </div>
         <DealsListView
           v-if="tab.label === 'Deals' && rows.length"
           class="mt-4"
@@ -156,10 +165,14 @@
           :options="{ selectable: false, showTooltip: false }"
         />
         <EmptyState
-          v-if="!rows.length"
+          v-if="!rows.length && tab.label !== 'Deals'"
           :icon="tab.icon"
           :name="__(tab.label)"
         />
+        <div v-if="!rows.length && tab.label === 'Deals'" class="flex flex-1 flex-col items-center justify-center gap-3 text-ink-gray-4">
+          <component :is="tab.icon" class="h-12 w-12" />
+          <span class="text-base">{{ __('No Deals Found') }}</span>
+        </div>
       </template>
     </Tabs>
   </div>
@@ -389,7 +402,7 @@ const deals = createListResource({
     'name',
     'organization',
     'currency',
-    'annual_revenue',
+    'deal_value',
     'status',
     'email',
     'mobile_no',
@@ -448,7 +461,7 @@ function getDealRowObject(deal) {
       label: deal.organization,
       logo: organization.doc?.organization_logo,
     },
-    annual_revenue: getFormattedCurrency('annual_revenue', deal),
+    deal_value: getFormattedCurrency('deal_value', deal),
     status: {
       label: deal.status,
       color: getDealStatus(deal.status)?.color,
@@ -495,7 +508,7 @@ const dealColumns = [
   },
   {
     label: __('Amount'),
-    key: 'annual_revenue',
+    key: 'deal_value',
     align: 'right',
     width: '9rem',
   },
@@ -553,6 +566,17 @@ const contactColumns = [
     width: '8rem',
   },
 ]
+
+async function createDeal() {
+  const doc = await call('frappe.client.insert', {
+    doc: {
+      doctype: 'CRM Deal',
+      organization: props.organizationId,
+      status: 'Open',
+    },
+  })
+  router.push({ name: 'Deal', params: { dealId: doc.name } })
+}
 
 function openAddressModal(_address) {
   showAddressModal.value = true
