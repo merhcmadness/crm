@@ -2,34 +2,9 @@
 
 /* ─── Merch Madness Brand Theme ─────────────────────────────────────────── */
 
-:root {
-  /* Brand colors */
-  --mm-lime: #AAFF00;
-  --mm-lime-dark: #8FD900;
-  --mm-purple-dark: #2D1654;
-  --mm-purple-mid: #3D2070;
-  --mm-purple-light: #4a2880;
-  --mm-ink: #1A1A1A;
-
-  /* Sidebar background → dark purple */
-  --surface-menu-bar: #2D1654;
-
-  /* Active/selected sidebar item → lime green */
-  --surface-selected: #AAFF00;
-}
-
-/* ─── Global Font ────────────────────────────────────────────────────────── */
-html,
-body,
-button,
-input,
-textarea,
-select {
-  font-family: 'InterVar', ui-sans-serif, system-ui, sans-serif !important;
-}
-
-/* ─── Sidebar text on dark purple background ─────────────────────────────── */
+/* ─── Sidebar background → dark purple ──────────────────────────────────── */
 .bg-surface-menu-bar {
+  background-color: #2D1654 !important;
   color: rgba(255, 255, 255, 0.85);
 }
 
@@ -65,7 +40,7 @@ select {
   color: #1A1A1A !important;
 }
 
-/* Sidebar section label (e.g. "Views") */
+/* Sidebar section label */
 .bg-surface-menu-bar .text-ink-gray-5 {
   color: rgba(255, 255, 255, 0.45) !important;
 }
@@ -75,15 +50,7 @@ select {
   background-color: rgba(255, 255, 255, 0.2) !important;
 }
 
-/* Sidebar border */
-.border-r.bg-surface-menu-bar,
-[class~="bg-surface-menu-bar"] + * {
-  border-color: rgba(255, 255, 255, 0.1) !important;
-}
-
 /* ─── Primary Buttons → Lime Green ──────────────────────────────────────── */
-
-/* frappe-ui solid buttons */
 .bg-ink-gray-9:not(.bg-surface-menu-bar) {
   background-color: #AAFF00 !important;
   color: #1A1A1A !important;
@@ -104,7 +71,6 @@ select {
 .text-ink-blue-3 {
   color: #7B5EA7 !important;
 }
-
 
 @layer components {
   .prose-f {

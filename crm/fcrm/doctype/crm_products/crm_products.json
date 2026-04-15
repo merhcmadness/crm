@@ -97,8 +97,8 @@
    "fieldname": "product_code",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Product",
-   "options": "CRM Product"
+   "label": "Item",
+   "options": "Item"
   },
   {
    "bold": 1,

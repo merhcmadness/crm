@@ -90,16 +90,26 @@ class CRMProducts {
 
   async product_code(idx) {
     let row = this.doc.getRow('products', idx)
+    if (!row.product_code) return
 
-    let a = await call("frappe.client.get_value", {
-        doctype: "CRM Product",
+    // Fetch item name from ERPNext Item
+    let item = await call("frappe.client.get_value", {
+        doctype: "Item",
         filters: { name: row.product_code },
-        fieldname: ["product_name", "standard_rate"],
+        fieldname: ["item_name"],
     })
+    if (item && item.item_name) {
+        row.product_name = item.item_name
+    }
 
-    row.product_name = a.product_name
-    if (a.standard_rate && !row.rate) {
-        row.rate = a.standard_rate
+    // Fetch rate from Standard Selling price list
+    let price = await call("frappe.client.get_value", {
+        doctype: "Item Price",
+        filters: { item_code: row.product_code, price_list: "Standard Selling", selling: 1 },
+        fieldname: ["price_list_rate"],
+    })
+    if (price && price.price_list_rate && !row.rate) {
+        row.rate = price.price_list_rate
         row.trigger("rate")
     }
   }
