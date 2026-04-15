@@ -9,6 +9,8 @@
   "product_code",
   "column_break_gvbc",
   "product_name",
+  "material",
+  "description",
   "section_break_fnvf",
   "qty",
   "column_break_ajac",
@@ -34,6 +36,16 @@
    "fieldtype": "Data",
    "label": "Product Name",
    "reqd": 1
+  },
+  {
+   "fieldname": "material",
+   "fieldtype": "Data",
+   "label": "Material"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
   },
   {
    "fieldname": "section_break_fnvf",
