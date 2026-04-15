@@ -48,6 +48,16 @@ def get_linked_docs(deal):
 			order_by='creation desc',
 		)
 
+
+	if frappe.db.table_exists('Work Order'):
+		invoice_names = [inv['name'] for inv in result['invoices']]
+		result['work_orders'] = frappe.get_all(
+			'Work Order',
+			filters=[['sales_order', 'in', invoice_names], ['docstatus', '!=', 2]],
+			fields=['name', 'status', 'production_item', 'qty', 'sales_order'],
+			order_by='creation desc',
+		) if invoice_names else []
+
 	return result
 
 

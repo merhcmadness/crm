@@ -240,24 +240,33 @@ const isSidebarCollapsed = useStorage('isSidebarCollapsed', false)
 const ravenOpen = ref(false)
 const ravenUrl = `${window.location.origin}/raven`
 
-function syncRavenTheme(iframe) {
-  try {
-    let currentTheme = document.documentElement.getAttribute('data-theme')
-    if (!currentTheme || currentTheme === 'system') {
-      currentTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-    }
-    iframe.contentDocument.documentElement.setAttribute('data-theme', currentTheme)
-  } catch (e) {}
+function getRavenTheme() {
+  const crmTheme = document.documentElement.getAttribute('data-theme')
+  return (!crmTheme || crmTheme === 'system')
+    ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    : crmTheme
+}
+
+function syncRavenTheme() {
+  localStorage.setItem('appearance', JSON.stringify(getRavenTheme()))
 }
 
 function onRavenLoad(e) {
-  syncRavenTheme(e.target)
-  // Watch for theme changes on the CRM side
-  const observer = new MutationObserver(() => syncRavenTheme(e.target))
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+  try {
+    const theme = getRavenTheme()
+    const iframeDoc = e.target.contentDocument
+    // Set on body class (Radix UI uses body.dark / body.light)
+    iframeDoc.body.classList.remove('light', 'dark')
+    iframeDoc.body.classList.add(theme)
+    // Also set data-theme on html for any Frappe UI elements
+    iframeDoc.documentElement.setAttribute('data-theme', theme)
+  } catch(err) {}
 }
 
-function toggleRaven() { ravenOpen.value = !ravenOpen.value }
+function toggleRaven() {
+  if (!ravenOpen.value) syncRavenTheme()
+  ravenOpen.value = !ravenOpen.value
+}
 function openRavenFullscreen() { window.open(ravenUrl, '_blank') }
 
 const isFCSite = ref(window.is_fc_site)

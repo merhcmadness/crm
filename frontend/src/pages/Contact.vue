@@ -151,7 +151,65 @@
           :columns="columns"
           :options="{ selectable: false, showTooltip: false }"
         />
-        <EmptyState v-if="!rows.length" :icon="tab.icon" name="Deals" />
+        <EmptyState v-if="tab.label === 'Deals' && !rows.length" :icon="tab.icon" name="Deals" />
+
+        <!-- Referrals Tab -->
+        <div v-if="tab.label === 'Referrals'" class="flex flex-col gap-4 p-5 overflow-auto">
+          <!-- Period filter -->
+          <div class="flex gap-2">
+            <button
+              v-for="p in periods"
+              :key="p.value"
+              @click="activePeriod = p.value; referralStats.reload()"
+              class="px-3 py-1 text-sm rounded font-medium"
+              :class="activePeriod === p.value ? 'bg-ink-gray-9 text-white' : 'bg-surface-gray-2 text-ink-gray-6 hover:bg-surface-gray-3'"
+            >{{ p.label }}</button>
+          </div>
+
+          <!-- Metric cards -->
+          <div v-if="referralStats.data" class="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <div v-for="metric in referralMetrics" :key="metric.label" class="rounded-lg border p-4">
+              <div class="text-2xl font-semibold text-ink-gray-9">{{ metric.value }}</div>
+              <div class="text-sm text-ink-gray-5 mt-1">{{ metric.label }}</div>
+            </div>
+          </div>
+
+          <!-- Referral list -->
+          <div v-if="referralStats.data?.referral_list?.length" class="mt-2">
+            <div class="text-sm font-medium text-ink-gray-7 mb-2">Referrals Made</div>
+            <div class="rounded-lg border overflow-hidden">
+              <table class="w-full text-sm">
+                <thead class="bg-surface-gray-2">
+                  <tr>
+                    <th class="text-left px-4 py-2 text-ink-gray-5 font-medium">Name</th>
+                    <th class="text-left px-4 py-2 text-ink-gray-5 font-medium">Organization</th>
+                    <th class="text-left px-4 py-2 text-ink-gray-5 font-medium">Status</th>
+                    <th class="text-left px-4 py-2 text-ink-gray-5 font-medium">Converted</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="lead in referralStats.data.referral_list"
+                    :key="lead.name"
+                    class="border-t hover:bg-surface-gray-1 cursor-pointer"
+                    @click="$router.push({ name: 'Lead', params: { leadId: lead.name } })"
+                  >
+                    <td class="px-4 py-2 text-ink-gray-8">{{ lead.lead_name || lead.name }}</td>
+                    <td class="px-4 py-2 text-ink-gray-6">{{ lead.organization || '—' }}</td>
+                    <td class="px-4 py-2 text-ink-gray-6">{{ lead.status || '—' }}</td>
+                    <td class="px-4 py-2">
+                      <span v-if="lead.referral_converted" class="text-green-600 font-medium">Yes</span>
+                      <span v-else class="text-ink-gray-4">No</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div v-else-if="referralStats.data && !referralStats.data.referral_list?.length" class="text-center text-ink-gray-4 py-10">
+            No referrals found for this contact.
+          </div>
+        </div>
       </template>
     </Tabs>
   </div>
@@ -300,7 +358,40 @@ const tabs = [
     icon: DealsIcon,
     count: computed(() => deals.data?.length),
   },
+  {
+    label: 'Referrals',
+    icon: DealsIcon,
+    count: computed(() => referralStats.data?.referrals ?? ''),
+  },
 ]
+
+const periods = [
+  { label: 'MTD', value: 'mtd' },
+  { label: 'QTD', value: 'qtd' },
+  { label: 'YTD', value: 'ytd' },
+  { label: 'All Time', value: 'all_time' },
+]
+const activePeriod = ref('all_time')
+
+const referralStats = createResource({
+  url: 'merch_madness_customizations.api.referrals.get_referral_stats',
+  params: { contact_name: props.contactId, period: activePeriod },
+  auto: true,
+})
+
+const referralMetrics = computed(() => {
+  const d = referralStats.data
+  if (!d) return []
+  const fmt = (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n)
+  return [
+    { label: 'Referrals', value: d.referrals },
+    { label: 'Referrals Converted', value: d.referrals_converted },
+    { label: 'Referrals Rejected', value: d.referrals_rejected },
+    { label: 'Revenue Generated', value: fmt(d.revenue_generated) },
+    { label: 'Avg Conversion Rate of Referrers', value: d.avg_conversion_rate ? `${(d.avg_conversion_rate * 100).toFixed(0)}%` : '—' },
+    { label: 'Referrer Score', value: d.referrer_score ? `${(d.referrer_score * 100).toFixed(0)}%` : '—' },
+  ]
+})
 
 const deals = createResource({
   url: 'crm.api.contact.get_linked_deals',

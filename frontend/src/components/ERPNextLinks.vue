@@ -30,22 +30,6 @@
           </div>
         </div>
 
-        <div v-if="docs.sales_orders?.length" class="flex flex-col gap-1">
-          <div class="text-xs font-medium text-ink-gray-5 uppercase tracking-wide mb-1 mt-2">{{ __('Sales Orders') }}</div>
-          <div
-            v-for="o in docs.sales_orders"
-            :key="o.name"
-            class="flex items-center justify-between rounded-md px-3 py-2 text-sm bg-surface-gray-2 hover:bg-surface-gray-3 cursor-pointer"
-            @click="openDoc('sales-order', o.name)"
-          >
-            <span class="font-medium text-ink-gray-8">{{ o.name }}</span>
-            <div class="flex items-center gap-2">
-              <Badge :label="o.status" size="sm" :theme="statusTheme(o.status)" variant="subtle" />
-              <span class="text-xs text-ink-gray-5">{{ formatCurrency(o.grand_total, o.currency) }}</span>
-            </div>
-          </div>
-        </div>
-
         <div v-if="docs.invoices?.length" class="flex flex-col gap-1">
           <div class="text-xs font-medium text-ink-gray-5 uppercase tracking-wide mb-1 mt-2">{{ __('Invoices') }}</div>
           <div
@@ -62,24 +46,24 @@
           </div>
         </div>
 
-        <div v-if="docs.projects?.length" class="flex flex-col gap-1">
-          <div class="text-xs font-medium text-ink-gray-5 uppercase tracking-wide mb-1 mt-2">{{ __('Projects') }}</div>
+        <div v-if="docs.work_orders?.length" class="flex flex-col gap-1">
+          <div class="text-xs font-medium text-ink-gray-5 uppercase tracking-wide mb-1 mt-2">{{ __('Work Orders') }}</div>
           <div
-            v-for="p in docs.projects"
-            :key="p.name"
+            v-for="wo in docs.work_orders"
+            :key="wo.name"
             class="flex items-center justify-between rounded-md px-3 py-2 text-sm bg-surface-gray-2 hover:bg-surface-gray-3 cursor-pointer"
-            @click="openDoc('project', p.name)"
+            @click="openDoc('work-order', wo.name)"
           >
-            <span class="font-medium text-ink-gray-8">{{ p.name }}</span>
+            <span class="font-medium text-ink-gray-8">{{ wo.production_item }}</span>
             <div class="flex items-center gap-2">
-              <Badge :label="p.status" size="sm" variant="subtle" />
-              <span class="text-xs text-ink-gray-5">{{ p.percent_complete?.toFixed(0) }}%</span>
+              <Badge :label="wo.status" size="sm" :theme="woStatusTheme(wo.status)" variant="subtle" />
+              <span class="text-xs text-ink-gray-5">{{ wo.qty }} pcs</span>
             </div>
           </div>
         </div>
 
         <div
-          v-if="!docs.quotations?.length && !docs.sales_orders?.length && !docs.invoices?.length && !docs.projects?.length"
+          v-if="!docs.quotations?.length && !docs.invoices?.length && !docs.work_orders?.length"
           class="flex items-center justify-center py-4 text-sm text-ink-gray-4"
         >
           {{ __('No linked documents') }}
@@ -93,14 +77,6 @@
             :label="__('New Quotation')"
             :loading="creatingQuotation"
             @click="createQuotation"
-          />
-          <Button
-            v-if="dealStatus === 'Won' && !docs.projects?.length"
-            class="w-full"
-            variant="subtle"
-            :label="__('Create Project')"
-            :loading="creatingProject"
-            @click="createProject"
           />
         </div>
       </template>
@@ -120,7 +96,6 @@ const props = defineProps({
 })
 
 const opened = ref(true)
-const creatingProject = ref(false)
 const creatingQuotation = ref(false)
 
 const linkedDocs = createResource({
@@ -143,6 +118,14 @@ function statusTheme(status) {
   return map[status] || 'gray'
 }
 
+function woStatusTheme(status) {
+  const map = {
+    Draft: 'gray', 'Not Started': 'gray', 'In Process': 'blue',
+    Completed: 'green', Stopped: 'red', Cancelled: 'red',
+  }
+  return map[status] || 'gray'
+}
+
 function formatCurrency(amount, currency) {
   if (!amount) return ''
   return new Intl.NumberFormat('id-ID', {
@@ -161,19 +144,6 @@ async function createQuotation() {
     toast.error(e.messages?.[0] || __('Failed to create quotation'))
   } finally {
     creatingQuotation.value = false
-  }
-}
-
-async function createProject() {
-  creatingProject.value = true
-  try {
-    const name = await call('crm.api.erpnext_links.create_project_from_deal', { deal: props.dealId })
-    toast.success(__('Project created: ') + name)
-    linkedDocs.reload()
-  } catch (e) {
-    toast.error(e.messages?.[0] || __('Failed to create project'))
-  } finally {
-    creatingProject.value = false
   }
 }
 </script>

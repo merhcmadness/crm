@@ -141,6 +141,24 @@
         </button>
       </template>
       <template #tab-panel="{ tab }">
+        <div class="flex justify-end px-5 pt-3" v-if="tab.label === 'Deals' || tab.label === 'Contacts'">
+          <Button
+            v-if="tab.label === 'Deals'"
+            :label="__('New Deal')"
+            icon-left="plus"
+            size="sm"
+            variant="solid"
+            @click="createDeal"
+          />
+          <Button
+            v-if="tab.label === 'Contacts'"
+            :label="__('New Contact')"
+            icon-left="plus"
+            size="sm"
+            variant="solid"
+            @click="createContact"
+          />
+        </div>
         <DealsListView
           v-if="tab.label === 'Deals' && rows.length"
           class="mt-4"
@@ -155,11 +173,10 @@
           :columns="columns"
           :options="{ selectable: false, showTooltip: false }"
         />
-        <EmptyState
-          v-if="!rows.length"
-          :icon="tab.icon"
-          :name="__(tab.label)"
-        />
+        <div v-if="!rows.length" class="flex flex-1 flex-col items-center justify-center gap-3 text-ink-gray-4">
+          <component :is="tab.icon" class="h-12 w-12" />
+          <span class="text-base">{{ __('No') }} {{ __(tab.label) }} {{ __('Found') }}</span>
+        </div>
       </template>
     </Tabs>
   </div>
@@ -174,6 +191,18 @@
     :doctype="'CRM Organization'"
     :docname="props.organizationId"
     name="Organizations"
+  />
+  <DealModal
+    v-if="showDealModal"
+    v-model="showDealModal"
+    :defaults="dealDefaults"
+    @after-insert="deals.reload()"
+  />
+  <ContactModal
+    v-if="showContactModal"
+    v-model="showContactModal"
+    :defaults="contactDefaults"
+    @after-insert="contacts.reload()"
   />
 </template>
 
@@ -191,6 +220,8 @@ import DealsIcon from '@/components/Icons/DealsIcon.vue'
 import ContactsIcon from '@/components/Icons/ContactsIcon.vue'
 import DeleteLinkedDocModal from '@/components/DeleteLinkedDocModal.vue'
 import CustomActions from '@/components/CustomActions.vue'
+import DealModal from '@/components/Modals/DealModal.vue'
+import ContactModal from '@/components/Modals/ContactModal.vue'
 import { showAddressModal, addressProps } from '@/composables/modals'
 import { useDocument } from '@/data/document'
 import { getSettings } from '@/stores/settings'
@@ -389,7 +420,7 @@ const deals = createListResource({
     'name',
     'organization',
     'currency',
-    'annual_revenue',
+    'deal_value',
     'status',
     'email',
     'mobile_no',
@@ -448,7 +479,7 @@ function getDealRowObject(deal) {
       label: deal.organization,
       logo: organization.doc?.organization_logo,
     },
-    annual_revenue: getFormattedCurrency('annual_revenue', deal),
+    deal_value: getFormattedCurrency('deal_value', deal),
     status: {
       label: deal.status,
       color: getDealStatus(deal.status)?.color,
@@ -495,7 +526,7 @@ const dealColumns = [
   },
   {
     label: __('Amount'),
-    key: 'annual_revenue',
+    key: 'deal_value',
     align: 'right',
     width: '9rem',
   },
@@ -553,6 +584,20 @@ const contactColumns = [
     width: '8rem',
   },
 ]
+
+const showDealModal = ref(false)
+const dealDefaults = { organization: props.organizationId }
+
+function createDeal() {
+  showDealModal.value = true
+}
+
+const showContactModal = ref(false)
+const contactDefaults = { company_name: props.organizationId }
+
+function createContact() {
+  showContactModal.value = true
+}
 
 function openAddressModal(_address) {
   showAddressModal.value = true

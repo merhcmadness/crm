@@ -27,6 +27,7 @@
       allowedViews: ['list', 'group_by', 'kanban'],
     }"
   />
+  <DealMetrics :filters="deals.params?.filters || {}" />
   <KanbanView
     v-if="route.params.viewType == 'kanban'"
     v-model="deals"
@@ -274,6 +275,7 @@ import DealModal from '@/components/Modals/DealModal.vue'
 import NoteModal from '@/components/Modals/NoteModal.vue'
 import TaskModal from '@/components/Modals/TaskModal.vue'
 import ViewControls from '@/components/ViewControls.vue'
+import DealMetrics from '@/components/DealMetrics.vue'
 import { getMeta } from '@/stores/meta'
 import { globalStore } from '@/stores/global'
 import { usersStore } from '@/stores/users'

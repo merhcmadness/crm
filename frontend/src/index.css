@@ -1,24 +1,130 @@
 @import 'frappe-ui/style.css';
 
+/* ─── Merch Madness Brand Theme ─────────────────────────────────────────── */
+
+:root {
+  /* Brand colors */
+  --mm-lime: #AAFF00;
+  --mm-lime-dark: #8FD900;
+  --mm-purple-dark: #2D1654;
+  --mm-purple-mid: #3D2070;
+  --mm-purple-light: #4a2880;
+  --mm-ink: #1A1A1A;
+
+  /* Sidebar background → dark purple */
+  --surface-menu-bar: #2D1654;
+
+  /* Active/selected sidebar item → lime green */
+  --surface-selected: #AAFF00;
+}
+
+/* ─── Global Font ────────────────────────────────────────────────────────── */
+html,
+body,
+button,
+input,
+textarea,
+select {
+  font-family: 'InterVar', ui-sans-serif, system-ui, sans-serif !important;
+}
+
+/* ─── Sidebar text on dark purple background ─────────────────────────────── */
+.bg-surface-menu-bar {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* All text/icon colors inside sidebar → white */
+.bg-surface-menu-bar .text-ink-gray-3,
+.bg-surface-menu-bar .text-ink-gray-4,
+.bg-surface-menu-bar .text-ink-gray-5,
+.bg-surface-menu-bar .text-ink-gray-6,
+.bg-surface-menu-bar .text-ink-gray-7,
+.bg-surface-menu-bar .text-ink-gray-8,
+.bg-surface-menu-bar .text-ink-gray-9 {
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+
+/* Sidebar buttons default state */
+.bg-surface-menu-bar button {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* Sidebar hover → slightly lighter purple */
+.bg-surface-menu-bar button:hover:not(.bg-surface-selected) {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Active sidebar item → lime green bg, dark text */
+.bg-surface-menu-bar .bg-surface-selected {
+  background-color: #AAFF00 !important;
+  box-shadow: none !important;
+}
+
+.bg-surface-menu-bar .bg-surface-selected,
+.bg-surface-menu-bar .bg-surface-selected * {
+  color: #1A1A1A !important;
+}
+
+/* Sidebar section label (e.g. "Views") */
+.bg-surface-menu-bar .text-ink-gray-5 {
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
+/* Sidebar divider */
+.bg-surface-menu-bar .bg-surface-gray-6 {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Sidebar border */
+.border-r.bg-surface-menu-bar,
+[class~="bg-surface-menu-bar"] + * {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* ─── Primary Buttons → Lime Green ──────────────────────────────────────── */
+
+/* frappe-ui solid buttons */
+.bg-ink-gray-9:not(.bg-surface-menu-bar) {
+  background-color: #AAFF00 !important;
+  color: #1A1A1A !important;
+}
+
+.hover\:bg-gray-800:hover,
+.hover\:bg-ink-gray-9:hover {
+  background-color: #8FD900 !important;
+}
+
+/* ─── Deal Metrics accent color ──────────────────────────────────────────── */
+.text-cyan-700 {
+  color: #6aad00 !important;
+}
+
+/* ─── Links and active accents ───────────────────────────────────────────── */
+.text-ink-blue-2,
+.text-ink-blue-3 {
+  color: #7B5EA7 !important;
+}
+
+
 @layer components {
   .prose-f {
     @apply break-all
-			max-w-none
-			prose
-			prose-code:break-all
-			prose-code:whitespace-pre-wrap
-			prose-img:border
-			prose-img:rounded-lg
-			prose-sm
-			prose-table:table-fixed
-			prose-td:border
-			prose-td:border-outline-gray-2
-			prose-td:p-2
-			prose-td:relative
-			prose-th:bg-surface-gray-2
-			prose-th:border
-			prose-th:border-outline-gray-2
-			prose-th:p-2
-			prose-th:relative;
+       max-w-none
+       prose
+       prose-code:break-all
+       prose-code:whitespace-pre-wrap
+       prose-img:border
+       prose-img:rounded-lg
+       prose-sm
+       prose-table:table-fixed
+       prose-td:border
+       prose-td:border-outline-gray-2
+       prose-td:p-2
+       prose-td:relative
+       prose-th:bg-surface-gray-2
+       prose-th:border
+       prose-th:border-outline-gray-2
+       prose-th:p-2
+       prose-th:relative;
   }
 }
