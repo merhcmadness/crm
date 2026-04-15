@@ -9,6 +9,8 @@
   "product_code",
   "column_break_gvbc",
   "product_name",
+  "material",
+  "description",
   "section_break_fnvf",
   "qty",
   "column_break_ajac",
@@ -34,6 +36,20 @@
    "fieldtype": "Data",
    "label": "Product Name",
    "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "material",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Material"
+  },
+  {
+   "columns": 3,
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Description"
   },
   {
    "fieldname": "section_break_fnvf",
@@ -97,8 +113,8 @@
    "fieldname": "product_code",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Product",
-   "options": "CRM Product"
+   "label": "Item",
+   "options": "Item"
   },
   {
    "bold": 1,
