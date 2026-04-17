@@ -43,7 +43,7 @@
         class="flex h-[45px] cursor-copy items-center border-b px-5 py-2.5 text-sm font-medium text-ink-gray-5"
         @click="copyToClipboard(dealId)"
       >
-        {{ __(dealId) }}
+        {{ title }}
       </div>
       <div class="flex items-center justify-start gap-4 border-b p-5">
         <Tooltip :text="__('Organization Logo')">
