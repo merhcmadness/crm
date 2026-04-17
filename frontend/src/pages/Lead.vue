@@ -154,41 +154,11 @@
 
     <!-- CENTER: Status pipeline + Activity -->
     <div class="flex flex-1 flex-col overflow-hidden">
-      <!-- Status Pipeline Bar -->
-      <div class="flex items-stretch border-b bg-surface-gray-2 overflow-x-auto min-h-[45px]">
-        <template v-for="(status, i) in leadStatuses.data" :key="status.name">
-          <button
-            v-if="status.type !== 'Lost' && status.type !== 'Won'"
-            class="relative flex flex-1 min-w-[80px] items-center justify-center px-3 py-2 text-xs font-medium transition-colors"
-            :class="doc.status === status.name
-              ? 'bg-surface-white text-ink-gray-9 font-semibold'
-              : 'text-ink-gray-5 hover:bg-surface-gray-3 hover:text-ink-gray-7'"
-            @click="triggerStatusChange(status.name)"
-          >
-            <span
-              v-if="doc.status === status.name"
-              class="absolute bottom-0 left-0 right-0 h-0.5"
-              :style="{ backgroundColor: status.color }"
-            />
-            {{ __(status.name) }}
-            <span v-if="i < leadStatuses.data.filter(s => s.type !== 'Lost' && s.type !== 'Won').length - 1" class="ml-3 text-ink-gray-3">›</span>
-          </button>
-        </template>
-        <!-- Lost/Won statuses on the right -->
-        <div class="flex items-center gap-1 px-3 border-l">
-          <template v-for="status in leadStatuses.data" :key="status.name + '-terminal'">
-            <button
-              v-if="status.type === 'Lost' || status.type === 'Won'"
-              class="rounded px-2 py-1 text-xs font-medium transition-colors"
-              :class="doc.status === status.name ? 'text-white' : 'text-ink-gray-5 hover:text-ink-gray-9'"
-              :style="doc.status === status.name ? { backgroundColor: status.color } : {}"
-              @click="triggerStatusChange(status.name)"
-            >
-              {{ __(status.name) }}
-            </button>
-          </template>
-        </div>
-      </div>
+      <StatusPipeline
+        :statuses="leadStatuses.data"
+        :currentStatus="doc.status"
+        @change="triggerStatusChange"
+      />
 
       <Tabs
         v-model="tabIndex"
@@ -269,6 +239,7 @@ import Activities from '@/components/Activities/Activities.vue'
 import AssignTo from '@/components/AssignTo.vue'
 import FilesUploader from '@/components/FilesUploader/FilesUploader.vue'
 import SidePanelLayout from '@/components/SidePanelLayout.vue'
+import StatusPipeline from '@/components/StatusPipeline.vue'
 import SLASection from '@/components/SLASection.vue'
 import CustomActions from '@/components/CustomActions.vue'
 import ConvertToDealModal from '@/components/Modals/ConvertToDealModal.vue'
