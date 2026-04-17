@@ -195,8 +195,14 @@
         :tabs="tabs"
         class="flex flex-1 overflow-hidden flex-col [&_[role='tab']]:px-0 [&_[role='tab']]:shrink-0 [&_[role='tablist']]:px-5 [&_[role='tablist']]:p-0 [&_[role='tablist']]:pl-5 [&_[role='tablist']::-webkit-scrollbar]:h-0 [&_[role='tablist']]:min-h-[36px] [&_[role='tablist']]:gap-7.5 [&_[role='tabpanel']:not([hidden])]:flex [&_[role='tabpanel']:not([hidden])]:grow"
       >
-        <template #tab-panel>
+        <template #tab-panel="{ tab }">
+          <DataFields
+            v-if="tab.name === 'Products'"
+            doctype="CRM Deal"
+            :docname="dealId"
+          />
           <Activities
+            v-else
             ref="activities"
             v-model:reload="reload"
             v-model:tabIndex="tabIndex"
@@ -278,6 +284,7 @@ import ArrowUpRightIcon from '@/components/Icons/ArrowUpRightIcon.vue'
 import SuccessIcon from '@/components/Icons/SuccessIcon.vue'
 import AttachmentIcon from '@/components/Icons/AttachmentIcon.vue'
 import DocumentIcon from '@/components/Icons/DocumentIcon.vue'
+import DataFields from '@/components/Activities/DataFields.vue'
 import LayoutHeader from '@/components/LayoutHeader.vue'
 import Activities from '@/components/Activities/Activities.vue'
 import OrganizationModal from '@/components/Modals/OrganizationModal.vue'
@@ -513,6 +520,11 @@ const tabs = computed(() => {
       name: 'Attachments',
       label: __('Attachments'),
       icon: AttachmentIcon,
+    },
+    {
+      name: 'Products',
+      label: __('Products'),
+      icon: DocumentIcon,
     },
     {
       name: 'ERPNext',
