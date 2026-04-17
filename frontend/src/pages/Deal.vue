@@ -196,11 +196,12 @@
         class="flex flex-1 overflow-hidden flex-col [&_[role='tab']]:px-0 [&_[role='tab']]:shrink-0 [&_[role='tablist']]:px-5 [&_[role='tablist']]:p-0 [&_[role='tablist']]:pl-5 [&_[role='tablist']::-webkit-scrollbar]:h-0 [&_[role='tablist']]:min-h-[36px] [&_[role='tablist']]:gap-7.5 [&_[role='tabpanel']:not([hidden])]:flex [&_[role='tabpanel']:not([hidden])]:grow"
       >
         <template #tab-panel="{ tab }">
-          <DataFields
-            v-if="tab.name === 'Products'"
-            doctype="CRM Deal"
-            :docname="dealId"
-          />
+          <div v-if="tab.name === 'Products'" class="h-full flex flex-col px-3 sm:px-10">
+            <DataFields
+              doctype="CRM Deal"
+              :docname="dealId"
+            />
+          </div>
           <Activities
             v-else
             ref="activities"
