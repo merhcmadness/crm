@@ -42,27 +42,10 @@
     </template>
   </LayoutHeader>
   <div v-if="doc.name" class="flex h-full overflow-hidden">
-    <Tabs
-      v-model="tabIndex"
-      :tabs="tabs"
-      class="flex flex-1 overflow-hidden flex-col [&_[role='tab']]:px-0 [&_[role='tab']]:shrink-0 [&_[role='tablist']]:px-5 [&_[role='tablist']::-webkit-scrollbar]:h-0 [&_[role='tablist']]:min-h-[45px] [&_[role='tablist']]:gap-7.5 [&_[role='tabpanel']:not([hidden])]:flex [&_[role='tabpanel']:not([hidden])]:grow"
-    >
-      <template #tab-panel>
-        <Activities
-          ref="activities"
-          v-model:reload="reload"
-          v-model:tabIndex="tabIndex"
-          doctype="CRM Lead"
-          :docname="leadId"
-          :tabs="tabs"
-          @beforeSave="beforeStatusChange"
-          @afterSave="reloadResources"
-        />
-      </template>
-    </Tabs>
-    <Resizer class="flex flex-col justify-between border-l" side="right">
+    <!-- LEFT: About / Fields -->
+    <Resizer side="left" class="flex flex-col border-r" :min-width="240" :default-width="300">
       <div
-        class="flex h-[45px] cursor-copy items-center border-b px-5 py-2.5 text-lg font-medium text-ink-gray-9"
+        class="flex h-[45px] cursor-copy items-center border-b px-5 py-2.5 text-sm font-medium text-ink-gray-5"
         @click="copyToClipboard(leadId)"
       >
         {{ __(leadId) }}
@@ -72,8 +55,8 @@
         @success="(file) => updateField('image', file.file_url)"
       >
         <template #default="{ openFileSelector }">
-          <div class="flex items-center justify-start gap-5 border-b p-5">
-            <div class="group relative size-12">
+          <div class="flex items-center justify-start gap-4 border-b p-5">
+            <div class="group relative size-12 flex-shrink-0">
               <Avatar
                 size="3xl"
                 class="size-12"
@@ -88,9 +71,7 @@
                         options: [
                           {
                             icon: 'upload',
-                            label: doc.image
-                              ? __('Change Image')
-                              : __('Upload Image'),
+                            label: doc.image ? __('Change Image') : __('Upload Image'),
                             onClick: openFileSelector,
                           },
                           {
@@ -106,63 +87,40 @@
               >
                 <div
                   class="z-1 absolute bottom-0.5 left-0 right-0.5 flex h-9 cursor-pointer items-center justify-center rounded-b-full bg-black bg-opacity-40 pt-3 opacity-0 duration-300 ease-in-out group-hover:opacity-100"
-                  style="
-                    -webkit-clip-path: inset(12px 0 0 0);
-                    clip-path: inset(12px 0 0 0);
-                  "
+                  style="-webkit-clip-path: inset(12px 0 0 0); clip-path: inset(12px 0 0 0);"
                 >
                   <CameraIcon class="size-4 cursor-pointer text-white" />
                 </div>
               </component>
             </div>
-            <div class="flex flex-col gap-2.5 truncate">
+            <div class="flex flex-col gap-2 truncate min-w-0">
               <Tooltip :text="doc.lead_name || __('Set First Name')">
-                <div class="truncate text-2xl font-medium text-ink-gray-9">
+                <div class="truncate text-lg font-semibold text-ink-gray-9">
                   {{ title }}
                 </div>
               </Tooltip>
-              <div class="flex gap-1.5">
+              <div class="flex flex-wrap gap-1.5">
                 <Button
                   v-if="callEnabled"
                   :tooltip="__('Make a Call')"
                   :icon="PhoneIcon"
-                  @click="
-                    () =>
-                      doc.mobile_no
-                        ? makeCall(doc.mobile_no)
-                        : toast.error(
-                            __('Please set a mobile number to make calls'),
-                          )
-                  "
+                  @click="() => doc.mobile_no ? makeCall(doc.mobile_no) : toast.error(__('Please set a mobile number to make calls'))"
                 />
-
                 <Button
                   :tooltip="__('Send an Email')"
                   :icon="Email2Icon"
-                  @click="
-                    doc.email
-                      ? openEmailBox()
-                      : toast.error(
-                          __('Please set an email address to send emails'),
-                        )
-                  "
+                  @click="doc.email ? openEmailBox() : toast.error(__('Please set an email address to send emails'))"
                 />
                 <Button
                   :tooltip="__('Go to Website')"
                   :icon="LinkIcon"
-                  @click="
-                    doc.website
-                      ? openWebsite(doc.website)
-                      : toast.error(__('Please set a website to visit'))
-                  "
+                  @click="doc.website ? openWebsite(doc.website) : toast.error(__('Please set a website to visit'))"
                 />
-
                 <Button
                   :tooltip="__('Attach a File')"
                   :icon="AttachmentIcon"
                   @click="showFilesUploader = true"
                 />
-
                 <Button
                   v-if="canDelete"
                   :tooltip="__('Delete')"
@@ -182,10 +140,7 @@
         v-model="doc"
         @updateField="updateField"
       />
-      <div
-        v-if="sections.data"
-        class="flex flex-1 flex-col justify-between overflow-hidden"
-      >
+      <div v-if="sections.data" class="flex flex-1 flex-col overflow-hidden">
         <SidePanelLayout
           :sections="sections.data"
           doctype="CRM Lead"
@@ -196,6 +151,64 @@
         />
       </div>
     </Resizer>
+
+    <!-- CENTER: Status pipeline + Activity -->
+    <div class="flex flex-1 flex-col overflow-hidden">
+      <!-- Status Pipeline Bar -->
+      <div class="flex items-stretch border-b bg-surface-gray-2 overflow-x-auto min-h-[45px]">
+        <template v-for="(status, i) in leadStatuses.data" :key="status.name">
+          <button
+            v-if="status.type !== 'Lost' && status.type !== 'Won'"
+            class="relative flex flex-1 min-w-[80px] items-center justify-center px-3 py-2 text-xs font-medium transition-colors"
+            :class="doc.status === status.name
+              ? 'bg-surface-white text-ink-gray-9 font-semibold'
+              : 'text-ink-gray-5 hover:bg-surface-gray-3 hover:text-ink-gray-7'"
+            @click="triggerStatusChange(status.name)"
+          >
+            <span
+              v-if="doc.status === status.name"
+              class="absolute bottom-0 left-0 right-0 h-0.5"
+              :style="{ backgroundColor: status.color }"
+            />
+            {{ __(status.name) }}
+            <span v-if="i < leadStatuses.data.filter(s => s.type !== 'Lost' && s.type !== 'Won').length - 1" class="ml-3 text-ink-gray-3">›</span>
+          </button>
+        </template>
+        <!-- Lost/Won statuses on the right -->
+        <div class="flex items-center gap-1 px-3 border-l">
+          <template v-for="status in leadStatuses.data" :key="status.name + '-terminal'">
+            <button
+              v-if="status.type === 'Lost' || status.type === 'Won'"
+              class="rounded px-2 py-1 text-xs font-medium transition-colors"
+              :class="doc.status === status.name ? 'text-white' : 'text-ink-gray-5 hover:text-ink-gray-9'"
+              :style="doc.status === status.name ? { backgroundColor: status.color } : {}"
+              @click="triggerStatusChange(status.name)"
+            >
+              {{ __(status.name) }}
+            </button>
+          </template>
+        </div>
+      </div>
+
+      <Tabs
+        v-model="tabIndex"
+        :tabs="tabs"
+        class="flex flex-1 overflow-hidden flex-col [&_[role='tab']]:px-0 [&_[role='tab']]:shrink-0 [&_[role='tablist']]:px-5 [&_[role='tablist']::-webkit-scrollbar]:h-0 [&_[role='tablist']]:min-h-[45px] [&_[role='tablist']]:gap-7.5 [&_[role='tabpanel']:not([hidden])]:flex [&_[role='tabpanel']:not([hidden])]:grow"
+      >
+      <template #tab-panel>
+        <Activities
+          ref="activities"
+          v-model:reload="reload"
+          v-model:tabIndex="tabIndex"
+          doctype="CRM Lead"
+          :docname="leadId"
+          :tabs="tabs"
+          @beforeSave="beforeStatusChange"
+          @afterSave="reloadResources"
+        />
+      </template>
+    </Tabs>
+    </div>
   </div>
   <ErrorPage
     v-else-if="errorTitle"
@@ -291,7 +304,7 @@ import { useActiveTabManager } from '@/composables/useActiveTabManager'
 
 const { brand } = getSettings()
 const { $dialog, $socket, makeCall } = globalStore()
-const { statusOptions, getLeadStatus } = statusesStore()
+const { statusOptions, getLeadStatus, leadStatuses } = statusesStore()
 const { doctypeMeta } = getMeta('CRM Lead')
 
 const route = useRoute()
@@ -420,11 +433,6 @@ const tabs = computed(() => {
       name: 'Comments',
       label: __('Comments'),
       icon: CommentIcon,
-    },
-    {
-      name: 'Data',
-      label: __('Data'),
-      icon: DetailsIcon,
     },
     {
       name: 'Calls',
