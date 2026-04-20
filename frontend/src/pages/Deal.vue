@@ -647,7 +647,9 @@ const isOrganizationRavenLinked = computed(() => {
 
 const organizationRavenEmbedUrl = computed(() => {
   if (!organizationRavenChannel.value?.route) return null
-  return `${window.location.origin}${organizationRavenChannel.value.route}`
+  const embedUrl = new URL(organizationRavenChannel.value.route, window.location.origin)
+  embedUrl.searchParams.set('embedded', '1')
+  return embedUrl.toString()
 })
 
 watch(

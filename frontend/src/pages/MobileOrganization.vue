@@ -441,7 +441,9 @@ const isRavenLinked = computed(() => {
 
 const ravenEmbedUrl = computed(() => {
   if (!ravenChannel.value?.route) return null
-  return `${window.location.origin}${ravenChannel.value.route}`
+  const embedUrl = new URL(ravenChannel.value.route, window.location.origin)
+  embedUrl.searchParams.set('embedded', '1')
+  return embedUrl.toString()
 })
 
 const ravenChannelResource = createResource({
