@@ -208,6 +208,81 @@
               :docname="dealId"
             />
           </div>
+          <div
+            v-else-if="tab.name === 'Raven'"
+            class="flex h-full flex-col overflow-hidden px-5 py-4"
+          >
+            <div class="rounded-xl border border-outline-gray-2 bg-surface-white p-5">
+              <div class="flex items-start justify-between gap-4">
+                <div>
+                  <div class="text-base font-medium text-ink-gray-9">
+                    {{ __('Organization Raven Channel') }}
+                  </div>
+                  <p class="mt-1 text-sm text-ink-gray-6">
+                    {{ __('This deal uses the linked organization channel in Raven.') }}
+                  </p>
+                </div>
+                <Badge
+                  variant="solid"
+                  theme="gray"
+                  size="sm"
+                  :class="isOrganizationRavenLinked ? 'bg-surface-green-2 text-ink-green-3' : 'bg-surface-gray-3 text-ink-gray-6'"
+                >
+                  {{ isOrganizationRavenLinked ? __('Linked') : __('Not Linked') }}
+                </Badge>
+              </div>
+
+              <div
+                v-if="organizationRavenChannel"
+                class="mt-5 grid gap-3 rounded-lg bg-surface-gray-2 p-4 text-sm text-ink-gray-7"
+              >
+                <div>
+                  <span class="font-medium text-ink-gray-9">{{ __('Channel') }}:</span>
+                  {{ organizationRavenChannel.channel_name }}
+                </div>
+                <div>
+                  <span class="font-medium text-ink-gray-9">{{ __('Type') }}:</span>
+                  {{ organizationRavenChannel.type }}
+                </div>
+                <div>
+                  <span class="font-medium text-ink-gray-9">{{ __('Workspace') }}:</span>
+                  {{ organizationRavenChannel.workspace }}
+                </div>
+              </div>
+
+              <div class="mt-5 flex flex-wrap gap-2">
+                <Button
+                  v-if="!organizationRavenChannel"
+                  :label="isCreatingOrganizationRavenChannel ? __('Creating...') : __('Create Organization Channel')"
+                  icon-left="plus"
+                  variant="solid"
+                  :loading="isCreatingOrganizationRavenChannel"
+                  @click="createOrganizationRavenChannel"
+                />
+                <Button
+                  :label="__('Open Raven')"
+                  icon-left="external-link"
+                  :disabled="!organizationRavenChannel && isCreatingOrganizationRavenChannel"
+                  @click="openOrganizationRavenChannel"
+                />
+              </div>
+
+              <div
+                v-if="organizationRavenChannel"
+                class="mt-5 overflow-hidden rounded-xl border border-outline-gray-2 bg-surface-gray-2"
+              >
+                <div class="border-b border-outline-gray-2 px-4 py-2 text-sm text-ink-gray-6">
+                  {{ __('Embedded organization channel') }}
+                </div>
+                <iframe
+                  :src="organizationRavenEmbedUrl"
+                  class="h-[640px] w-full border-0 bg-white"
+                  allow="microphone"
+                  @load="onRavenFrameLoad"
+                />
+              </div>
+            </div>
+          </div>
           <Activities
             v-else
             ref="activities"
@@ -363,6 +438,7 @@ const props = defineProps({
 const errorTitle = ref('')
 const errorMessage = ref('')
 const showDeleteLinkedDocModal = ref(false)
+const isCreatingOrganizationRavenChannel = ref(false)
 
 const {
   triggerOnChange,
@@ -540,6 +616,11 @@ const tabs = computed(() => {
       icon: DocumentIcon,
     },
     {
+      name: 'Raven',
+      label: __('Raven'),
+      icon: CommentIcon,
+    },
+    {
       name: 'WhatsApp',
       label: __('WhatsApp'),
       icon: WhatsAppIcon,
@@ -550,6 +631,44 @@ const tabs = computed(() => {
 })
 
 const { tabIndex } = useActiveTabManager(tabs, 'lastDealTab')
+
+const organizationRavenChannelResource = createResource({
+  url: 'crm.api.raven.get_linked_raven_channel',
+  auto: false,
+})
+
+const organizationRavenChannel = computed(() => {
+  return organizationRavenChannelResource.data?.channel || null
+})
+
+const isOrganizationRavenLinked = computed(() => {
+  return Boolean(organizationRavenChannel.value?.name)
+})
+
+const organizationRavenEmbedUrl = computed(() => {
+  if (!organizationRavenChannel.value?.route) return null
+  return `${window.location.origin}${organizationRavenChannel.value.route}`
+})
+
+watch(
+  () => doc.value.organization,
+  (organization) => {
+    if (!organization) {
+      organizationRavenChannelResource.update({
+        params: { organization: '' },
+        auto: false,
+      })
+      return
+    }
+
+    organizationRavenChannelResource.update({
+      params: { organization },
+      auto: true,
+    })
+    organizationRavenChannelResource.reload()
+  },
+  { immediate: true },
+)
 
 const sections = createResource({
   url: 'crm.fcrm.doctype.crm_fields_layout.crm_fields_layout.get_sidepanel_sections',
@@ -718,15 +837,45 @@ async function openOrganizationRavenChannel() {
 
   isOpeningOrganizationRaven.value = true
   try {
-    const response = await call('crm.api.raven.create_public_raven_channel', {
-      organization: doc.value.organization,
-    })
+    syncRavenTheme()
+    const response = await createOrganizationRavenChannel()
     const route = response?.channel?.route || '/raven'
     window.open(`${window.location.origin}${route}`, '_blank')
   } catch (error) {
     toast.error(error?.messages?.[0] || error?.message || __('Unable to open Raven channel'))
   } finally {
     isOpeningOrganizationRaven.value = false
+  }
+}
+
+async function createOrganizationRavenChannel() {
+  if (!doc.value.organization) {
+    toast.error(__('Please set an organization first'))
+    return null
+  }
+
+  isCreatingOrganizationRavenChannel.value = true
+  try {
+    syncRavenTheme()
+    const response = await call('crm.api.raven.create_public_raven_channel', {
+      organization: doc.value.organization,
+    })
+    await organizationRavenChannelResource.reload()
+    toast.success(
+      response?.created
+        ? __('Organization Raven channel created')
+        : __('Organization Raven channel already linked'),
+    )
+    return response
+  } catch (error) {
+    toast.error(
+      error?.messages?.[0] ||
+        error?.message ||
+        __('Unable to create organization Raven channel'),
+    )
+    throw error
+  } finally {
+    isCreatingOrganizationRavenChannel.value = false
   }
 }
 
@@ -743,6 +892,30 @@ function openEmailBox() {
 function statusLabel(status) {
   if (isTranslatable('CRM Deal Status')) return __(status)
   return status
+}
+
+function getRavenTheme() {
+  const crmTheme = document.documentElement.getAttribute('data-theme')
+  return !crmTheme || crmTheme === 'system'
+    ? window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light'
+    : crmTheme
+}
+
+function syncRavenTheme() {
+  localStorage.setItem('appearance', JSON.stringify(getRavenTheme()))
+}
+
+function onRavenFrameLoad(e) {
+  syncRavenTheme()
+  try {
+    const theme = getRavenTheme()
+    const iframeDoc = e.target.contentDocument
+    iframeDoc.body.classList.remove('light', 'dark')
+    iframeDoc.body.classList.add(theme)
+    iframeDoc.documentElement.setAttribute('data-theme', theme)
+  } catch (error) {}
 }
 
 const showLostReasonModal = ref(false)

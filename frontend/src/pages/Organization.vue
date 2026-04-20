@@ -231,6 +231,21 @@
                 @click="openRavenChannel"
               />
             </div>
+
+            <div
+              v-if="ravenChannel"
+              class="mt-5 overflow-hidden rounded-xl border border-outline-gray-2 bg-surface-gray-2"
+            >
+              <div class="border-b border-outline-gray-2 px-4 py-2 text-sm text-ink-gray-6">
+                {{ __('Embedded organization channel') }}
+              </div>
+              <iframe
+                :src="ravenEmbedUrl"
+                class="h-[640px] w-full border-0 bg-white"
+                allow="microphone"
+                @load="onRavenFrameLoad"
+              />
+            </div>
           </div>
         </div>
         <div
@@ -487,6 +502,11 @@ const isRavenLinked = computed(() => {
   return Boolean(ravenChannel.value?.name)
 })
 
+const ravenEmbedUrl = computed(() => {
+  if (!ravenChannel.value?.route) return null
+  return `${window.location.origin}${ravenChannel.value.route}`
+})
+
 const ravenChannelResource = createResource({
   url: 'crm.api.raven.get_linked_raven_channel',
   params: { organization: props.organizationId },
@@ -687,6 +707,7 @@ function createContact() {
 async function createRavenChannel() {
   isCreatingRavenChannel.value = true
   try {
+    syncRavenTheme()
     let response = await call('crm.api.raven.create_public_raven_channel', {
       organization: props.organizationId,
     })
@@ -704,8 +725,33 @@ async function createRavenChannel() {
 }
 
 function openRavenChannel() {
+  syncRavenTheme()
   const route = ravenChannel.value?.route || '/raven'
   window.open(`${window.location.origin}${route}`, '_blank')
+}
+
+function getRavenTheme() {
+  const crmTheme = document.documentElement.getAttribute('data-theme')
+  return !crmTheme || crmTheme === 'system'
+    ? window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light'
+    : crmTheme
+}
+
+function syncRavenTheme() {
+  localStorage.setItem('appearance', JSON.stringify(getRavenTheme()))
+}
+
+function onRavenFrameLoad(e) {
+  syncRavenTheme()
+  try {
+    const theme = getRavenTheme()
+    const iframeDoc = e.target.contentDocument
+    iframeDoc.body.classList.remove('light', 'dark')
+    iframeDoc.body.classList.add(theme)
+    iframeDoc.documentElement.setAttribute('data-theme', theme)
+  } catch (error) {}
 }
 
 function openAddressModal(_address) {
