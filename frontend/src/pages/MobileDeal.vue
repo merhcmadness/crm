@@ -822,36 +822,31 @@ function syncRavenTheme() {
 }
 
 function collapseEmbeddedRavenSidebar(iframeDoc) {
+  const styleId = 'crm-raven-embed-overrides'
   iframeDoc.documentElement.style.setProperty('--sidebar-width', '0rem')
-
-  const ravenDivs = Array.from(iframeDoc.querySelectorAll('div'))
-  const fixedSidebar = ravenDivs.find((el) => {
-    const cls = typeof el.className === 'string' ? el.className : ''
-    return (
-      cls.includes('w-80') &&
-      cls.includes('border-r') &&
-      cls.includes('fixed') &&
-      cls.includes('bg-gray-2')
-    )
-  })
-
-  if (fixedSidebar) {
-    fixedSidebar.style.display = 'none'
+  let styleTag = iframeDoc.getElementById(styleId)
+  if (!styleTag) {
+    styleTag = iframeDoc.createElement('style')
+    styleTag.id = styleId
+    iframeDoc.head.appendChild(styleTag)
   }
-
-  const mainPane = ravenDivs.find((el) => {
-    const cls = typeof el.className === 'string' ? el.className : ''
-    return (
-      cls.includes('md:ml-[var(--sidebar-width)]') &&
-      cls.includes('w-[calc(100vw-var(--sidebar-width)-0rem)]')
-    )
-  })
-
-  if (mainPane) {
-    mainPane.style.marginLeft = '0'
-    mainPane.style.width = '100vw'
-    mainPane.style.maxWidth = '100%'
-  }
+  styleTag.textContent = `
+    :root { --sidebar-width: 0rem !important; }
+    .w-80.bg-gray-2.border-r-gray-3.border-r,
+    .w-80.dark\\:bg-gray-1.bg-gray-2.border-r-gray-3.border-r {
+      display: none !important;
+      width: 0 !important;
+      min-width: 0 !important;
+      max-width: 0 !important;
+      overflow: hidden !important;
+      border: 0 !important;
+    }
+    .md\\:ml-\\[var\\(--sidebar-width\\)\\].w-\\[calc\\(100vw-var\\(--sidebar-width\\)-0rem\\)\\] {
+      margin-left: 0 !important;
+      width: 100vw !important;
+      max-width: 100% !important;
+    }
+  `
 }
 
 function onRavenFrameLoad(e) {
@@ -860,6 +855,7 @@ function onRavenFrameLoad(e) {
     const theme = getRavenTheme()
     const iframeDoc = e.target.contentDocument
     collapseEmbeddedRavenSidebar(iframeDoc)
+    window.setTimeout(() => collapseEmbeddedRavenSidebar(iframeDoc), 100)
     iframeDoc.body.classList.remove('light', 'dark')
     iframeDoc.body.classList.add(theme)
     iframeDoc.documentElement.setAttribute('data-theme', theme)
