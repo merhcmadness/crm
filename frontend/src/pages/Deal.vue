@@ -80,6 +80,12 @@
               @click="doc.website ? openWebsite(doc.website) : toast.error(__('Please set a website to visit'))"
             />
             <Button
+              :tooltip="__('Open Organization Raven Channel')"
+              :icon="CommentIcon"
+              :loading="isOpeningOrganizationRaven"
+              @click="openOrganizationRavenChannel"
+            />
+            <Button
               :tooltip="__('Attach a File')"
               :icon="AttachmentIcon"
               @click="showFilesUploader = true"
@@ -440,6 +446,7 @@ onBeforeUnmount(() => {
 const reload = ref(false)
 const showOrganizationModal = ref(false)
 const showFilesUploader = ref(false)
+const isOpeningOrganizationRaven = ref(false)
 const _organization = ref({})
 
 const breadcrumbs = computed(() => {
@@ -701,6 +708,24 @@ function updateField(name, value) {
 
 function deleteDeal() {
   showDeleteLinkedDocModal.value = true
+}
+
+async function openOrganizationRavenChannel() {
+  if (!doc.value.organization) {
+    toast.error(__('Please set an organization first'))
+    return
+  }
+
+  isOpeningOrganizationRaven.value = true
+  try {
+    const response = await call('crm.crm.api.raven.create_public_raven_channel', {
+      organization: doc.value.organization,
+    })
+    const route = response?.channel?.route || '/raven'
+    window.open(`${window.location.origin}${route}`, '_blank')
+  } finally {
+    isOpeningOrganizationRaven.value = false
+  }
 }
 
 const activities = ref(null)
