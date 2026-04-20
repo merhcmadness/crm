@@ -748,6 +748,7 @@ function onRavenFrameLoad(e) {
   try {
     const theme = getRavenTheme()
     const iframeDoc = e.target.contentDocument
+    iframeDoc.documentElement.style.setProperty('--sidebar-width', '0rem')
     iframeDoc.body.classList.remove('light', 'dark')
     iframeDoc.body.classList.add(theme)
     iframeDoc.documentElement.setAttribute('data-theme', theme)
