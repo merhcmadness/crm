@@ -26,16 +26,69 @@ def _get_linked_channel(organization: str):
 
 
 def _get_workspace():
-	workspaces = frappe.get_all("Raven Workspace", pluck="name")
+	workspaces = frappe.get_all("Raven Workspace", fields=["name", "workspace_name", "type"])
+	if not workspaces:
+		frappe.throw(_("No Raven workspace found."))
+
 	if len(workspaces) == 1:
-		return workspaces[0]
-	if len(workspaces) > 1:
-		frappe.throw(
-			_(
-				"Multiple Raven workspaces exist. Please set the workspace in the CRM Raven integration before creating organization channels."
-			)
+		return workspaces[0].name
+
+	default_company = frappe.db.get_single_value("Global Defaults", "default_company")
+	normalized_company = _normalize_workspace_label(default_company)
+	if normalized_company:
+		matches = [
+			workspace
+			for workspace in workspaces
+			if _workspace_matches_company(workspace, normalized_company)
+		]
+		if len(matches) == 1:
+			return matches[0].name
+
+	member_workspaces = {
+		row.workspace
+		for row in frappe.get_all(
+			"Raven Workspace Member",
+			filters={"user": frappe.session.user},
+			fields=["workspace"],
 		)
-	frappe.throw(_("No Raven workspace found."))
+	}
+	available_member_workspaces = [workspace for workspace in workspaces if workspace.name in member_workspaces]
+	if len(available_member_workspaces) == 1:
+		return available_member_workspaces[0].name
+
+	non_generic_workspaces = [
+		workspace for workspace in workspaces if _normalize_workspace_label(workspace.workspace_name or workspace.name) != "raven"
+	]
+	if len(non_generic_workspaces) == 1:
+		return non_generic_workspaces[0].name
+
+	frappe.throw(
+		_(
+			"Multiple Raven workspaces exist and CRM could not determine which one to use automatically."
+		)
+	)
+
+
+def _normalize_workspace_label(value: str | None) -> str:
+	value = re.sub(r"\([^)]*\)", "", (value or "").strip().lower())
+	value = re.sub(r"[^a-z0-9]+", " ", value)
+	return re.sub(r"\s{2,}", " ", value).strip()
+
+
+def _workspace_matches_company(workspace, normalized_company: str) -> bool:
+	workspace_labels = {
+		_normalize_workspace_label(workspace.name),
+		_normalize_workspace_label(workspace.workspace_name),
+	}
+	return any(
+		label
+		and (
+			label == normalized_company
+			or label in normalized_company
+			or normalized_company in label
+		)
+		for label in workspace_labels
+	)
 
 
 def _get_channel_name(organization: str) -> str:

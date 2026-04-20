@@ -718,11 +718,13 @@ async function openOrganizationRavenChannel() {
 
   isOpeningOrganizationRaven.value = true
   try {
-    const response = await call('crm.crm.api.raven.create_public_raven_channel', {
+    const response = await call('crm.api.raven.create_public_raven_channel', {
       organization: doc.value.organization,
     })
     const route = response?.channel?.route || '/raven'
     window.open(`${window.location.origin}${route}`, '_blank')
+  } catch (error) {
+    toast.error(error?.messages?.[0] || error?.message || __('Unable to open Raven channel'))
   } finally {
     isOpeningOrganizationRaven.value = false
   }

@@ -425,7 +425,7 @@ const isRavenLinked = computed(() => {
 })
 
 const ravenChannelResource = createResource({
-  url: 'crm.crm.api.raven.get_linked_raven_channel',
+  url: 'crm.api.raven.get_linked_raven_channel',
   params: { organization: props.organizationId },
   auto: true,
 })
@@ -497,7 +497,7 @@ const columns = computed(() => {
 async function createRavenChannel() {
   isCreatingRavenChannel.value = true
   try {
-    let response = await call('crm.crm.api.raven.create_public_raven_channel', {
+    let response = await call('crm.api.raven.create_public_raven_channel', {
       organization: props.organizationId,
     })
     await Promise.all([organization.reload(), ravenChannelResource.reload()])
@@ -506,6 +506,8 @@ async function createRavenChannel() {
         ? __('Public Raven channel created')
         : __('Raven channel already linked'),
     )
+  } catch (error) {
+    toast.error(error?.messages?.[0] || error?.message || __('Unable to create Raven channel'))
   } finally {
     isCreatingRavenChannel.value = false
   }
