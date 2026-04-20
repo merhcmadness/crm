@@ -24,6 +24,7 @@ class CRMOrganization(Document):
 		no_of_employees: DF.Literal["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"]
 		organization_logo: DF.AttachImage | None
 		organization_name: DF.Data | None
+		raven_channel: DF.Link | None
 		territory: DF.Link | None
 		website: DF.Data | None
 	# end: auto-generated types

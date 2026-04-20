@@ -137,7 +137,67 @@
           :options="{ selectable: false, showTooltip: false }"
         />
         <div
-          v-if="!rows.length && tab.name !== 'Details'"
+          v-if="tab.label === 'Raven'"
+          class="flex flex-1 flex-col gap-4 overflow-auto px-4 py-4"
+        >
+          <div class="rounded-xl border border-outline-gray-2 bg-surface-white p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <div class="text-base font-medium text-ink-gray-9">
+                  {{ __('Raven Channel') }}
+                </div>
+                <p class="mt-1 text-sm text-ink-gray-6">
+                  {{ __('Create a public Raven channel for this organization and link it directly to the CRM record.') }}
+                </p>
+              </div>
+              <Badge
+                variant="solid"
+                theme="gray"
+                size="sm"
+                :class="isRavenLinked ? 'bg-surface-green-2 text-ink-green-3' : 'bg-surface-gray-3 text-ink-gray-6'"
+              >
+                {{ isRavenLinked ? __('Linked') : __('Not Linked') }}
+              </Badge>
+            </div>
+
+            <div
+              v-if="ravenChannel"
+              class="mt-4 grid gap-3 rounded-lg bg-surface-gray-2 p-4 text-sm text-ink-gray-7"
+            >
+              <div>
+                <span class="font-medium text-ink-gray-9">{{ __('Channel') }}:</span>
+                {{ ravenChannel.channel_name }}
+              </div>
+              <div>
+                <span class="font-medium text-ink-gray-9">{{ __('Type') }}:</span>
+                {{ ravenChannel.type }}
+              </div>
+              <div>
+                <span class="font-medium text-ink-gray-9">{{ __('Workspace') }}:</span>
+                {{ ravenChannel.workspace }}
+              </div>
+            </div>
+
+            <div class="mt-4 flex flex-wrap gap-2">
+              <Button
+                v-if="!ravenChannel"
+                :label="isCreatingRavenChannel ? __('Creating...') : __('Create Public Channel')"
+                icon-left="plus"
+                variant="solid"
+                :loading="isCreatingRavenChannel"
+                @click="createRavenChannel"
+              />
+              <Button
+                :label="__('Open Raven')"
+                icon-left="external-link"
+                :disabled="!ravenChannel && isCreatingRavenChannel"
+                @click="openRavenChannel"
+              />
+            </div>
+          </div>
+        </div>
+        <div
+          v-if="!rows.length && tab.name !== 'Details' && tab.label !== 'Raven'"
           class="grid flex-1 place-items-center text-xl font-medium text-ink-gray-4"
         >
           <div class="flex flex-col items-center justify-center space-y-3">
@@ -160,6 +220,7 @@ import DetailsIcon from '@/components/Icons/DetailsIcon.vue'
 import CameraIcon from '@/components/Icons/CameraIcon.vue'
 import DealsIcon from '@/components/Icons/DealsIcon.vue'
 import ContactsIcon from '@/components/Icons/ContactsIcon.vue'
+import CommentIcon from '@/components/Icons/CommentIcon.vue'
 import { showAddressModal, addressProps } from '@/composables/modals'
 import { useDocument } from '@/data/document'
 import { getSettings } from '@/stores/settings'
@@ -331,6 +392,7 @@ function getParsedSections(_sections) {
 }
 
 const tabIndex = ref(0)
+const isCreatingRavenChannel = ref(false)
 const tabs = [
   {
     name: 'Details',
@@ -349,7 +411,26 @@ const tabs = [
     icon: h(ContactsIcon, { class: 'h-4 w-4' }),
     count: computed(() => contacts.data?.length),
   },
+  {
+    name: 'Raven',
+    label: __('Raven'),
+    icon: h(CommentIcon, { class: 'h-4 w-4' }),
+    count: computed(() => (isRavenLinked.value ? 1 : 0)),
+  },
 ]
+
+const activeTab = computed(() => tabs[tabIndex.value]?.name)
+const isRavenLinked = computed(() => {
+  return Boolean(ravenChannel.value?.name)
+})
+
+const ravenChannelResource = createResource({
+  url: 'crm.crm.api.raven.get_linked_raven_channel',
+  params: { organization: props.organizationId },
+  auto: true,
+})
+
+const ravenChannel = computed(() => ravenChannelResource.data?.channel || null)
 
 const deals = createListResource({
   type: 'list',
@@ -396,20 +477,44 @@ const contacts = createListResource({
 })
 
 const rows = computed(() => {
-  let list = !tabIndex.value ? deals : contacts
+  let list = activeTab.value === 'Deals' ? deals : contacts
 
-  if (!list.data) return []
+  if (!['Deals', 'Contacts'].includes(activeTab.value) || !list.data) return []
 
   return list.data.map((row) => {
-    return !tabIndex.value ? getDealRowObject(row) : getContactRowObject(row)
+    return activeTab.value === 'Deals'
+      ? getDealRowObject(row)
+      : getContactRowObject(row)
   })
 })
 
 const { getFormattedCurrency } = getMeta('CRM Deal')
 
 const columns = computed(() => {
-  return tabIndex.value === 0 ? dealColumns : contactColumns
+  return activeTab.value === 'Deals' ? dealColumns : contactColumns
 })
+
+async function createRavenChannel() {
+  isCreatingRavenChannel.value = true
+  try {
+    let response = await call('crm.crm.api.raven.create_public_raven_channel', {
+      organization: props.organizationId,
+    })
+    await Promise.all([organization.reload(), ravenChannelResource.reload()])
+    toast.success(
+      response?.created
+        ? __('Public Raven channel created')
+        : __('Raven channel already linked'),
+    )
+  } finally {
+    isCreatingRavenChannel.value = false
+  }
+}
+
+function openRavenChannel() {
+  const route = ravenChannel.value?.route || '/raven'
+  window.open(`${window.location.origin}${route}`, '_blank')
+}
 
 function getDealRowObject(deal) {
   return {

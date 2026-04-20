@@ -17,7 +17,8 @@
   "website",
   "territory",
   "industry",
-  "address"
+  "address",
+  "raven_channel"
  ],
  "fields": [
   {
@@ -79,6 +80,14 @@
    "fieldtype": "Link",
    "label": "Address",
    "options": "Address"
+  },
+  {
+   "fieldname": "raven_channel",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Raven Channel",
+   "options": "Raven Channel",
+   "read_only": 1
   },
   {
    "description": "The rate used to convert the organization\u2019s currency to your crm's base currency (set in CRM Settings). It is set once when the currency is first added and doesn't change automatically.",
