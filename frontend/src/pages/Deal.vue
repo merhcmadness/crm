@@ -907,12 +907,45 @@ function syncRavenTheme() {
   localStorage.setItem('appearance', JSON.stringify(getRavenTheme()))
 }
 
+function collapseEmbeddedRavenSidebar(iframeDoc) {
+  iframeDoc.documentElement.style.setProperty('--sidebar-width', '0rem')
+
+  const ravenDivs = Array.from(iframeDoc.querySelectorAll('div'))
+  const fixedSidebar = ravenDivs.find((el) => {
+    const cls = typeof el.className === 'string' ? el.className : ''
+    return (
+      cls.includes('w-80') &&
+      cls.includes('border-r') &&
+      cls.includes('fixed') &&
+      cls.includes('bg-gray-2')
+    )
+  })
+
+  if (fixedSidebar) {
+    fixedSidebar.style.display = 'none'
+  }
+
+  const mainPane = ravenDivs.find((el) => {
+    const cls = typeof el.className === 'string' ? el.className : ''
+    return (
+      cls.includes('md:ml-[var(--sidebar-width)]') &&
+      cls.includes('w-[calc(100vw-var(--sidebar-width)-0rem)]')
+    )
+  })
+
+  if (mainPane) {
+    mainPane.style.marginLeft = '0'
+    mainPane.style.width = '100vw'
+    mainPane.style.maxWidth = '100%'
+  }
+}
+
 function onRavenFrameLoad(e) {
   syncRavenTheme()
   try {
     const theme = getRavenTheme()
     const iframeDoc = e.target.contentDocument
-    iframeDoc.documentElement.style.setProperty('--sidebar-width', '0rem')
+    collapseEmbeddedRavenSidebar(iframeDoc)
     iframeDoc.body.classList.remove('light', 'dark')
     iframeDoc.body.classList.add(theme)
     iframeDoc.documentElement.setAttribute('data-theme', theme)
