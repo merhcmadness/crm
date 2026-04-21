@@ -174,6 +174,11 @@ doc_events = {
 			"crm.fcrm.doctype.erpnext_crm_settings.erpnext_crm_settings.create_customer_in_erpnext"
 		],
 	},
+	"CRM Organization": {
+		"on_update": [
+			"crm.fcrm.doctype.erpnext_crm_settings.erpnext_crm_settings.sync_organization_account_owner_to_erp"
+		],
+	},
 	"User": {
 		"before_validate": ["crm.api.live_demo.validate_user"],
 		"validate_reset_password": ["crm.api.live_demo.validate_reset_password"],

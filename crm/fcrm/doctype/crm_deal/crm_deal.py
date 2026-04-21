@@ -98,6 +98,7 @@ class CRMDeal(Document):
 			pass
 
 	def before_validate(self):
+		self.apply_organization_account_owner_default()
 		self.set_sla()
 
 	def validate(self):
@@ -131,6 +132,17 @@ class CRMDeal(Document):
 				self.status = "Qualification"
 			else:
 				self.status = frappe.get_all("CRM Deal Status", {"type": "Open"}, pluck="name")[0]
+
+	def apply_organization_account_owner_default(self):
+		if not self.organization:
+			return
+
+		account_owner = (frappe.db.get_value("CRM Organization", self.organization, "account_owner") or "").strip()
+		if not account_owner:
+			return
+
+		if not self.deal_owner or (self.is_new() and self.deal_owner == frappe.session.user):
+			self.deal_owner = account_owner
 
 	def set_primary_contact(self, contact=None):
 		if not self.contacts:

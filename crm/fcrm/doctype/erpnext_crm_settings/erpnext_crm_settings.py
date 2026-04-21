@@ -67,6 +67,15 @@ class ERPNextCRMSettings(Document):
 
 	def create_custom_fields_in_frappe_crm(self):
 		custom_fields = {
+			"CRM Organization": [
+				{
+					"fieldname": "account_owner",
+					"fieldtype": "Link",
+					"label": "Account Owner",
+					"options": "User",
+					"insert_after": "address",
+				}
+			],
 			"CRM Deal": [
 				{
 					"fieldname": "erpnext_customer",
@@ -77,6 +86,7 @@ class ERPNextCRMSettings(Document):
 			]
 		}
 		_create_custom_fields(custom_fields, ignore_validate=True)
+		ensure_organization_account_owner_layouts()
 
 	def create_custom_fields_in_remote_site(self):
 		client = get_erpnext_site_client(self)
@@ -279,6 +289,37 @@ def get_organization_address(organization: str | None = None):
 	}
 
 
+def get_organization_account_owner(organization: str | None = None):
+	if not organization:
+		return None
+	return (frappe.db.get_value("CRM Organization", organization, "account_owner") or "").strip() or None
+
+
+def sync_customer_account_manager_in_erpnext(customer_name: str | None, account_owner: str | None, erpnext_crm_settings):
+	if not customer_name:
+		return
+
+	account_owner = (account_owner or "").strip()
+
+	try:
+		if not erpnext_crm_settings.is_erpnext_in_different_site:
+			if frappe.db.exists("Customer", customer_name):
+				frappe.db.set_value("Customer", customer_name, "account_manager", account_owner, update_modified=False)
+				frappe.db.commit()
+			return
+
+		client = get_erpnext_site_client(erpnext_crm_settings)
+		client.post_api(
+			"merch_madness_customizations.api.crm.sync_customer_account_manager",
+			{"customer": customer_name, "account_manager": account_owner},
+		)
+	except Exception:
+		frappe.log_error(
+			frappe.get_traceback(),
+			f"Error while syncing account manager for ERP customer: {customer_name}",
+		)
+
+
 def create_customer_in_erpnext(doc, method):
 	erpnext_crm_settings = frappe.get_single("ERPNext CRM Settings")
 	if (
@@ -305,6 +346,7 @@ def create_customer_in_erpnext(doc, method):
 		"contacts": json.dumps(contacts),
 		"address": json.dumps(address) if address else None,
 	}
+	account_owner = get_organization_account_owner(doc.organization)
 	customer_name = None
 
 	try:
@@ -327,6 +369,7 @@ def create_customer_in_erpnext(doc, method):
 
 	if customer_name:
 		frappe.db.set_value("CRM Deal", doc.name, "erpnext_customer", customer_name)
+		sync_customer_account_manager_in_erpnext(customer_name, account_owner, erpnext_crm_settings)
 		frappe.publish_realtime("crm_customer_created")
 
 
@@ -337,6 +380,60 @@ def create_customer_in_remote_site(customer, erpnext_crm_settings):
 	except Exception:
 		frappe.log_error(frappe.get_traceback(), "Error while creating customer in remote site")
 		frappe.throw(_("Error while creating customer in ERPNext, check error log for more details"))
+
+
+def ensure_organization_account_owner_layouts():
+	layouts = frappe.get_all(
+		"CRM Fields Layout",
+		filters={"dt": "CRM Organization"},
+		fields=["name", "layout"],
+	)
+	for row in layouts:
+		try:
+			layout = json.loads(row.layout or "[]")
+		except Exception:
+			continue
+		changed = False
+		for tab in layout:
+			for section in tab.get("sections", []) if isinstance(tab, dict) and "sections" in tab else [tab]:
+				for column in section.get("columns", []):
+					fields = column.get("fields", [])
+					if "account_owner" in fields:
+						continue
+					if "address" in fields:
+						fields.insert(fields.index("address") + 1, "account_owner")
+						changed = True
+						break
+					if fields:
+						fields.append("account_owner")
+						changed = True
+						break
+				if changed:
+					break
+			if changed:
+				break
+		if changed:
+			frappe.db.set_value("CRM Fields Layout", row.name, "layout", json.dumps(layout), update_modified=False)
+	frappe.clear_cache()
+
+
+def sync_organization_account_owner_to_erp(doc, method=None):
+	erpnext_crm_settings = frappe.get_single("ERPNext CRM Settings")
+	if not erpnext_crm_settings.enabled:
+		return
+
+	account_owner = (getattr(doc, "account_owner", "") or "").strip()
+	customer_names = {doc.organization_name}
+	for row in frappe.get_all(
+		"CRM Deal",
+		filters={"organization": doc.name},
+		fields=["erpnext_customer"],
+	):
+		if row.get("erpnext_customer"):
+			customer_names.add(row["erpnext_customer"])
+
+	for customer_name in customer_names:
+		sync_customer_account_manager_in_erpnext(customer_name, account_owner, erpnext_crm_settings)
 
 
 @frappe.whitelist()
