@@ -464,6 +464,16 @@ function parseRows(rows, columns = []) {
           label: deal.deal_owner && getUser(deal.deal_owner).full_name,
           ...(deal.deal_owner && getUser(deal.deal_owner)),
         }
+      } else if (row == 'deal_value') {
+        _rows[row] = getFormattedCurrency('deal_value', {
+          ...deal,
+          deal_value:
+            deal.deal_value ||
+            deal.expected_deal_value ||
+            deal.net_total ||
+            deal.total ||
+            0,
+        })
       } else if (row == '_assign') {
         let assignees = JSON.parse(deal._assign || '[]')
         _rows[row] = assignees.map((user) => ({

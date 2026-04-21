@@ -580,13 +580,23 @@ const columns = computed(() => {
 })
 
 function getDealRowObject(deal) {
+  const resolvedAmount = {
+    ...deal,
+    deal_value:
+      deal.deal_value ||
+      deal.expected_deal_value ||
+      deal.net_total ||
+      deal.total ||
+      0,
+  }
+
   return {
     name: deal.name,
     organization: {
       label: deal.organization,
       logo: organization.doc?.organization_logo,
     },
-    deal_value: getFormattedCurrency('deal_value', deal),
+    deal_value: getFormattedCurrency('deal_value', resolvedAmount),
     status: {
       label: deal.status,
       color: getDealStatus(deal.status)?.color,

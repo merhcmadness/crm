@@ -114,6 +114,7 @@ class CRMDeal(Document):
 				self.closed_date = frappe.utils.nowdate()
 				self.auto_create_project()
 		self.validate_forecasting_fields()
+		self.sync_won_deal_value()
 		self.validate_lost_reason()
 		self.update_exchange_rate()
 
@@ -305,6 +306,21 @@ class CRMDeal(Document):
 				exchange_rate = get_exchange_rate(self.currency, system_currency)
 
 			self.db_set("exchange_rate", exchange_rate)
+
+	def sync_won_deal_value(self):
+		"""
+		Ensure won deals retain a usable deal value for CRM lists and reporting.
+		"""
+		if not self.status:
+			return
+
+		status_type = frappe.db.get_value("CRM Deal Status", self.status, "type")
+		if status_type != "Won":
+			return
+
+		fallback_value = self.expected_deal_value or self.net_total or self.total
+		if fallback_value and not self.deal_value:
+			self.deal_value = fallback_value
 
 	@staticmethod
 	def default_list_data():
