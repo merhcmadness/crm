@@ -121,9 +121,13 @@ function statusTheme(status) {
 function quoteStatusLabel(quote) {
   const signingStatus = quote.custom_docuseal_status
   const map = {
+    'Draft Quote': __('Draft Quote'),
+    'Quote Sent': __('Quote Sent'),
     Pending: __('Pending Signature'),
+    'Pending Signature': __('Pending Signature'),
     'Awaiting Internal Signature': __('Awaiting Internal Signature'),
     Completed: __('Signed / Accepted'),
+    'Signed / Accepted': __('Signed / Accepted'),
     Superseded: __('Superseded'),
   }
   return map[signingStatus] || quote.status
@@ -132,9 +136,13 @@ function quoteStatusLabel(quote) {
 function quoteStatusTheme(quote) {
   const signingStatus = quote.custom_docuseal_status
   const map = {
+    'Draft Quote': 'gray',
+    'Quote Sent': 'blue',
     Pending: 'orange',
+    'Pending Signature': 'orange',
     'Awaiting Internal Signature': 'blue',
     Completed: 'green',
+    'Signed / Accepted': 'green',
     Superseded: 'gray',
   }
   return map[signingStatus] || statusTheme(quote.status)

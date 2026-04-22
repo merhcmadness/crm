@@ -10,6 +10,15 @@ def get_linked_docs(deal):
 		'invoices': [],
 		'projects': [],
 	}
+	deal_quote_meta = {}
+
+	if frappe.db.table_exists('CRM Deal'):
+		deal_quote_meta = frappe.db.get_value(
+			'CRM Deal',
+			deal,
+			['custom_current_quote', 'custom_quote_status'],
+			as_dict=True,
+		) or {}
 
 	if frappe.db.table_exists('Quotation'):
 		result['quotations'] = frappe.get_all(
@@ -23,6 +32,14 @@ def get_linked_docs(deal):
 			fields=['name', 'status', 'custom_docuseal_status', 'grand_total', 'currency', 'transaction_date'],
 			order_by='transaction_date desc',
 		)
+
+		for quotation in result['quotations']:
+			if (
+				not quotation.get('custom_docuseal_status')
+				and quotation.get('name') == deal_quote_meta.get('custom_current_quote')
+				and deal_quote_meta.get('custom_quote_status')
+			):
+				quotation['custom_docuseal_status'] = deal_quote_meta.get('custom_quote_status')
 
 	if frappe.db.table_exists('Sales Order'):
 		result['sales_orders'] = frappe.get_all(
