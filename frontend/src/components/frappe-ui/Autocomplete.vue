@@ -261,6 +261,8 @@ watch(showOptions, (val) => {
     nextTick(() => {
       search.value.el.focus()
     })
+  } else {
+    query.value = ''
   }
 })
 
