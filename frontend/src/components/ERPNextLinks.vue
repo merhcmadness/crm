@@ -24,7 +24,7 @@
           >
             <span class="font-medium text-ink-gray-8">{{ q.name }}</span>
             <div class="flex items-center gap-2">
-              <Badge :label="q.status" size="sm" :theme="statusTheme(q.status)" variant="subtle" />
+              <Badge :label="quoteStatusLabel(q)" size="sm" :theme="quoteStatusTheme(q)" variant="subtle" />
               <span class="text-xs text-ink-gray-5">{{ formatCurrency(q.grand_total, q.currency) }}</span>
             </div>
           </div>
@@ -116,6 +116,28 @@ function statusTheme(status) {
     Unpaid: 'orange', Overdue: 'red', Cancelled: 'red', Completed: 'green', Open: 'blue',
   }
   return map[status] || 'gray'
+}
+
+function quoteStatusLabel(quote) {
+  const signingStatus = quote.custom_docuseal_status
+  const map = {
+    Pending: __('Pending Signature'),
+    'Awaiting Internal Signature': __('Awaiting Internal Signature'),
+    Completed: __('Signed / Accepted'),
+    Superseded: __('Superseded'),
+  }
+  return map[signingStatus] || quote.status
+}
+
+function quoteStatusTheme(quote) {
+  const signingStatus = quote.custom_docuseal_status
+  const map = {
+    Pending: 'orange',
+    'Awaiting Internal Signature': 'blue',
+    Completed: 'green',
+    Superseded: 'gray',
+  }
+  return map[signingStatus] || statusTheme(quote.status)
 }
 
 function woStatusTheme(status) {

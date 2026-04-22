@@ -15,12 +15,12 @@ def get_linked_docs(deal):
 		result['quotations'] = frappe.get_all(
 			'Quotation',
 			filters=[['crm_deal', '=', deal], ['docstatus', '!=', 2]],
-			fields=['name', 'status', 'grand_total', 'currency', 'transaction_date'],
+			fields=['name', 'status', 'custom_docuseal_status', 'grand_total', 'currency', 'transaction_date'],
 			order_by='transaction_date desc',
 		) or frappe.get_all(
 			'Quotation',
 			filters=[['party_name', '=', deal], ['quotation_to', '=', 'CRM Deal'], ['docstatus', '!=', 2]],
-			fields=['name', 'status', 'grand_total', 'currency', 'transaction_date'],
+			fields=['name', 'status', 'custom_docuseal_status', 'grand_total', 'currency', 'transaction_date'],
 			order_by='transaction_date desc',
 		)
 
