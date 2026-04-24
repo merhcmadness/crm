@@ -14,6 +14,34 @@
       </div>
 
       <template v-else>
+        <div class="flex flex-col gap-1">
+          <div class="text-xs font-medium text-ink-gray-5 uppercase tracking-wide mb-1">{{ __('Customer PO') }}</div>
+          <div class="rounded-md px-3 py-3 text-sm bg-surface-gray-2">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex flex-col gap-1">
+                <div class="font-medium text-ink-gray-8">
+                  {{ docs.customer_po?.po_no || __('No customer PO parsed yet') }}
+                </div>
+                <div v-if="docs.customer_po?.status" class="text-xs text-ink-gray-5">
+                  {{ __('Status') }}: {{ docs.customer_po.status }}
+                </div>
+                <div v-if="docs.customer_po?.po_date" class="text-xs text-ink-gray-5">
+                  {{ __('PO Date') }}: {{ docs.customer_po.po_date }}
+                </div>
+                <div v-if="docs.customer_po?.delivery_date" class="text-xs text-ink-gray-5">
+                  {{ __('Delivery Date') }}: {{ docs.customer_po.delivery_date }}
+                </div>
+                <div v-if="docs.customer_po?.file_name" class="text-xs text-ink-gray-5">
+                  {{ docs.customer_po.file_name }}
+                </div>
+              </div>
+              <div v-if="docs.customer_po?.total" class="text-xs text-ink-gray-5 whitespace-nowrap">
+                {{ formatCurrency(docs.customer_po.total, 'IDR') }}
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div v-if="docs.quotations?.length" class="flex flex-col gap-1">
           <div class="text-xs font-medium text-ink-gray-5 uppercase tracking-wide mb-1">{{ __('Quotations') }}</div>
           <div
@@ -74,6 +102,13 @@
           <Button
             class="w-full"
             variant="subtle"
+            :label="parsingCustomerPo ? __('Parsing Customer PO...') : __('Parse Customer PO')"
+            :loading="parsingCustomerPo"
+            @click="parseCustomerPo"
+          />
+          <Button
+            class="w-full"
+            variant="subtle"
             :label="__('New Quotation')"
             :loading="creatingQuotation"
             @click="createQuotation"
@@ -97,6 +132,7 @@ const props = defineProps({
 
 const opened = ref(true)
 const creatingQuotation = ref(false)
+const parsingCustomerPo = ref(false)
 
 const linkedDocs = createResource({
   url: 'crm.api.erpnext_links.get_linked_docs',
@@ -174,6 +210,23 @@ async function createQuotation() {
     toast.error(e.messages?.[0] || __('Failed to create quotation'))
   } finally {
     creatingQuotation.value = false
+  }
+}
+
+async function parseCustomerPo() {
+  parsingCustomerPo.value = true
+  try {
+    const result = await call('merch_madness_customizations.api.customer_po_intake.parse_customer_po_from_deal', {
+      deal: props.dealId,
+    })
+    toast.success(result?.customer_po_no
+      ? __('Customer PO parsed: {0}', [result.customer_po_no])
+      : __('Customer PO parsed'))
+    linkedDocs.reload()
+  } catch (e) {
+    toast.error(e.messages?.[0] || __('Failed to parse customer PO'))
+  } finally {
+    parsingCustomerPo.value = false
   }
 }
 </script>

@@ -9,6 +9,7 @@ def get_linked_docs(deal):
 		'sales_orders': [],
 		'invoices': [],
 		'projects': [],
+		'customer_po': {},
 	}
 	deal_quote_meta = {}
 
@@ -16,9 +17,26 @@ def get_linked_docs(deal):
 		deal_quote_meta = frappe.db.get_value(
 			'CRM Deal',
 			deal,
-			['custom_current_quote', 'custom_quote_status'],
+			[
+				'custom_current_quote',
+				'custom_quote_status',
+				'custom_customer_po_status',
+				'custom_customer_po_file',
+				'custom_customer_po_no',
+				'custom_customer_po_date',
+				'custom_customer_po_delivery_date',
+				'custom_customer_po_total',
+			],
 			as_dict=True,
 		) or {}
+		result['customer_po'] = {
+			'status': deal_quote_meta.get('custom_customer_po_status') or '',
+			'file_name': deal_quote_meta.get('custom_customer_po_file') or '',
+			'po_no': deal_quote_meta.get('custom_customer_po_no') or '',
+			'po_date': deal_quote_meta.get('custom_customer_po_date'),
+			'delivery_date': deal_quote_meta.get('custom_customer_po_delivery_date'),
+			'total': deal_quote_meta.get('custom_customer_po_total') or 0,
+		}
 
 	if frappe.db.table_exists('Quotation'):
 		result['quotations'] = frappe.get_all(
