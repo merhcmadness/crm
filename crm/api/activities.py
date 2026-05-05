@@ -1,4 +1,5 @@
 import json
+from urllib.parse import quote, urlparse
 
 import frappe
 from bs4 import BeautifulSoup
@@ -316,7 +317,7 @@ def get_lead_activities(name: str):
 
 
 def get_attachments(doctype: str, name: str):
-	return (
+	attachments = (
 		frappe.db.get_all(
 			"File",
 			filters={"attached_to_doctype": doctype, "attached_to_name": name},
@@ -333,6 +334,36 @@ def get_attachments(doctype: str, name: str):
 			],
 		)
 		or []
+	)
+	for attachment in attachments:
+		attachment["file_url"] = _resolve_attachment_url(
+			attachment.get("file_url"), attachment.get("file_name")
+		)
+	return attachments
+
+
+def _resolve_attachment_url(file_url: str | None, file_name: str | None = None):
+	file_url = (file_url or "").strip()
+	if not file_url or not file_url.startswith(("http://", "https://")):
+		return file_url
+
+	parsed = urlparse(file_url)
+	if "cloudflarestorage.com" not in (parsed.netloc or "") and "r2.dev" not in (parsed.netloc or ""):
+		return file_url
+
+	path = (parsed.path or "").lstrip("/")
+	parts = path.split("/", 1)
+	if len(parts) != 2:
+		return file_url
+
+	_bucket, key = parts
+	if not key:
+		return file_url
+
+	resolved_name = (file_name or "").strip() or key.rsplit("/", 1)[-1]
+	return (
+		"/api/method/frappe_s3_attachment.controller.generate_file"
+		f"?key={quote(key)}&file_name={quote(resolved_name)}"
 	)
 
 
