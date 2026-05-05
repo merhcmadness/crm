@@ -39,6 +39,28 @@ def get_linked_docs(deal):
 		}
 
 	if frappe.db.table_exists('Quotation'):
+		try:
+			pending_quotes = frappe.get_all(
+				'Quotation',
+				filters=[
+					['crm_deal', '=', deal],
+					['docstatus', '!=', 2],
+					['custom_docuseal_status', 'in', ['Pending', 'Awaiting Internal Signature']],
+				],
+				fields=['name'],
+				limit=10,
+			)
+			if pending_quotes:
+				from merch_madness_customizations.api.docuseal import sync_docuseal_status
+
+				for quotation in pending_quotes:
+					try:
+						sync_docuseal_status(quotation['name'], doctype='Quotation')
+					except Exception:
+						pass
+		except Exception:
+			pass
+
 		result['quotations'] = frappe.get_all(
 			'Quotation',
 			filters=[['crm_deal', '=', deal], ['docstatus', '!=', 2]],
