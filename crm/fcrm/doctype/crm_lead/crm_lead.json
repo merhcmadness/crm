@@ -134,14 +134,12 @@
   {
    "fieldname": "mobile_no",
    "fieldtype": "Data",
-   "label": "Mobile No.",
-   "options": "Phone"
+   "label": "Mobile No."
   },
   {
    "fieldname": "phone",
    "fieldtype": "Data",
-   "label": "Phone",
-   "options": "Phone"
+   "label": "Phone"
   },
   {
    "fieldname": "section_break_uixv",

@@ -143,8 +143,7 @@
   {
    "fieldname": "mobile_no",
    "fieldtype": "Data",
-   "label": "Primary mobile no",
-   "options": "Phone"
+   "label": "Primary mobile no"
   },
   {
    "fieldname": "status",
@@ -257,8 +256,7 @@
   {
    "fieldname": "phone",
    "fieldtype": "Data",
-   "label": "Primary phone",
-   "options": "Phone"
+   "label": "Primary phone"
   },
   {
    "fieldname": "log_tab",
