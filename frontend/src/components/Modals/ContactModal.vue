@@ -60,7 +60,7 @@ import {
   addressProps,
 } from '@/composables/modals'
 import { useDocument } from '@/data/document'
-import { evaluateDependsOnValue } from '@/utils'
+import { evaluateDependsOnValue, isValidPhoneNumber } from '@/utils'
 import { useTelemetry } from 'frappe-ui/frappe'
 import { createResource } from 'frappe-ui'
 import { ref, nextTick, onMounted } from 'vue'
@@ -114,10 +114,7 @@ function validateRequiredFields() {
     return __('Invalid Email Address')
   }
 
-  if (
-    _contact.doc.mobile_no &&
-    isNaN(_contact.doc.mobile_no.replace(/[-+() ]/g, ''))
-  ) {
+  if (_contact.doc.mobile_no && !isValidPhoneNumber(_contact.doc.mobile_no)) {
     return __('Mobile No. should be a number')
   }
 

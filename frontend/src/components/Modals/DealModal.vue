@@ -75,6 +75,7 @@
 <script setup>
 import EditIcon from '@/components/Icons/EditIcon.vue'
 import FieldLayout from '@/components/FieldLayout/FieldLayout.vue'
+import { isValidPhoneNumber } from '@/utils'
 import { usersStore } from '@/stores/users'
 import { statusesStore } from '@/stores/statuses'
 import { isMobileView } from '@/composables/settings'
@@ -194,10 +195,7 @@ async function createDeal() {
           return error.value
         }
       }
-      if (
-        deal.doc.mobile_no &&
-        isNaN(deal.doc.mobile_no.replace(/[-+() ]/g, ''))
-      ) {
+      if (deal.doc.mobile_no && !isValidPhoneNumber(deal.doc.mobile_no)) {
         error.value = __('Mobile No. should be a number')
         return error.value
       }

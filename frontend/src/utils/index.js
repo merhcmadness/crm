@@ -32,6 +32,20 @@ export function formatTime(seconds) {
   return formattedTime.trim()
 }
 
+export function isValidPhoneNumber(value) {
+  if (value === null || value === undefined || value === '') return true
+
+  const raw = String(value).trim()
+  if (!raw) return true
+
+  // Allow the common formatting characters users type for phone numbers,
+  // but reject any alphabetic or unexpected symbols.
+  if (!/^[\d\s()+-]+$/.test(raw)) return false
+
+  const digitsOnly = raw.replace(/\D/g, '')
+  return digitsOnly.length > 0
+}
+
 export function formatDate(date, format, onlyDate = false, onlyTime = false) {
   if (!date) return ''
   format = getFormat(date, format, onlyDate, onlyTime, false)

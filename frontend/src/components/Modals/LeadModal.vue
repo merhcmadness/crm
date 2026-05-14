@@ -55,6 +55,7 @@ import { showQuickEntryModal, quickEntryProps } from '@/composables/modals'
 import { useOnboarding, useTelemetry } from 'frappe-ui/frappe'
 import { createResource } from 'frappe-ui'
 import { useDocument } from '@/data/document'
+import { isValidPhoneNumber } from '@/utils'
 import { computed, onMounted, ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -137,10 +138,7 @@ async function createNewLead() {
             return error.value
           }
         }
-        if (
-          lead.doc.mobile_no &&
-          isNaN(lead.doc.mobile_no.replace(/[-+() ]/g, ''))
-        ) {
+        if (lead.doc.mobile_no && !isValidPhoneNumber(lead.doc.mobile_no)) {
           error.value = __('Mobile No. should be a number')
           return error.value
         }
