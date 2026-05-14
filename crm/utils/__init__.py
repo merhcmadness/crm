@@ -39,6 +39,25 @@ def parse_phone_number(phone_number, default_country="IN"):
 		return {"success": False, "error": str(e)}
 
 
+def normalize_phone_number(phone_number, default_country="ID"):
+	"""Normalize a phone number to E.164 when possible."""
+	if not phone_number:
+		return phone_number
+
+	phone_number = str(phone_number).strip()
+	if not phone_number:
+		return phone_number
+
+	try:
+		number = phonenumbers.parse(phone_number, default_country)
+		if phonenumbers.is_possible_number(number):
+			return phonenumbers.format_number(number, PNF.E164)
+	except NumberParseException:
+		pass
+
+	return phone_number
+
+
 def are_same_phone_number(number1, number2, default_region="IN", validate=True):
 	"""
 	Check if two phone numbers are the same, regardless of their format.

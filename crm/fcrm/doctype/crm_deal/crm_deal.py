@@ -10,6 +10,7 @@ from crm.api.exchange_rate import get_exchange_rate
 from crm.fcrm.doctype.crm_service_level_agreement.utils import get_sla
 from crm.fcrm.doctype.crm_status_change_log.crm_status_change_log import add_status_change_log
 from crm.fcrm.doctype.utils import add_or_remove_lost_reason_section_in_sidepanel
+from crm.utils import normalize_phone_number
 
 
 class CRMDeal(Document):
@@ -488,7 +489,10 @@ def create_contact(doc):
 		contact.append("email_ids", {"email_id": doc.get("email"), "is_primary": 1})
 
 	if doc.get("mobile_no"):
-		contact.append("phone_nos", {"phone": doc.get("mobile_no"), "is_primary_mobile_no": 1})
+		contact.append(
+			"phone_nos",
+			{"phone": normalize_phone_number(doc.get("mobile_no")), "is_primary_mobile_no": 1},
+		)
 
 	contact.insert(ignore_permissions=True)
 	contact.reload()  # load changes by hooks on contact
