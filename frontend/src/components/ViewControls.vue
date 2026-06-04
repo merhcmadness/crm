@@ -997,6 +997,17 @@ function loadMoreKanban(columnName) {
 function createOrUpdateStandardView() {
   if (route.query.view) return
   view.value.doctype = props.doctype
+
+  // Strip quick filter values before saving so they don't persist across navigation
+  const quickFilterFields = new Set(
+    (quickFilters.data || []).map((f) => f.fieldname),
+  )
+  const filtersWithoutQuick = Object.fromEntries(
+    Object.entries(defaultParams.value.filters || {}).filter(
+      ([key]) => !quickFilterFields.has(key),
+    ),
+  )
+
   call(
     'crm.fcrm.doctype.crm_view_settings.crm_view_settings.create_or_update_standard_view',
     {
@@ -1009,7 +1020,7 @@ function createOrUpdateStandardView() {
       type: view.value.type || 'list',
       icon: view.value.icon,
       name: view.value.name,
-      filters: defaultParams.value.filters,
+      filters: filtersWithoutQuick,
       order_by: defaultParams.value.order_by,
       group_by_field: defaultParams.value.view?.group_by_field,
       column_field: defaultParams.value.column_field,
