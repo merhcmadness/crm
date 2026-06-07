@@ -68,6 +68,29 @@
         </div>
       </div>
 
+      <div class="h-px w-full border-t my-6" />
+
+      <!-- Deal Title -->
+      <div class="mb-4">
+        <label class="block text-sm text-ink-gray-5 mb-1">{{ __('Deal Title') }} <span class="text-red-500">*</span></label>
+        <input
+          v-model="deal.doc.deal_title"
+          type="text"
+          class="form-control w-full"
+          :placeholder="__('Enter deal title')"
+        />
+      </div>
+
+      <!-- PPN -->
+      <div class="mb-4">
+        <label class="block text-sm text-ink-gray-5 mb-1">{{ __('Tax Type') }} <span class="text-red-500">*</span></label>
+        <select v-model="deal.doc.tax_type" class="form-control w-full">
+          <option value="">{{ __('Select...') }}</option>
+          <option value="PPN">PPN</option>
+          <option value="Non-PPN">Non-PPN</option>
+        </select>
+      </div>
+
       <div v-if="dealTabs.data?.length" class="h-px w-full border-t my-6" />
 
       <FieldLayout
@@ -99,7 +122,7 @@ import { showQuickEntryModal, quickEntryProps } from '@/composables/modals'
 import { isMobileView } from '@/composables/settings'
 import { useOnboarding, useTelemetry } from 'frappe-ui/frappe'
 import { Switch, Dialog, createResource, call } from 'frappe-ui'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 const props = defineProps({
@@ -126,8 +149,28 @@ const { capture } = useTelemetry()
 const { triggerConvertToDeal } = useDocument('CRM Lead', props.lead.name)
 const { document: deal } = useDocument('CRM Deal')
 
+// Pre-fill deal title from lead when modal opens
+watch(show, (val) => {
+  if (val && !deal.doc.deal_title) {
+    const lead = props.lead
+    const org = lead.organization || lead.company_name || ''
+    const name = [lead.first_name, lead.last_name].filter(Boolean).join(' ')
+    deal.doc.deal_title = org ? `${org} - ${name}` : name
+  }
+})
+
 async function convertToDeal() {
   error.value = ''
+
+  if (!deal.doc.deal_title) {
+    error.value = __('Deal Title is required')
+    return
+  }
+
+  if (!deal.doc.tax_type) {
+    error.value = __('Tax Type is required')
+    return
+  }
 
   if (existingContactChecked.value && !existingContact.value) {
     error.value = __('Please select an existing contact')
