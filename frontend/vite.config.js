@@ -13,7 +13,6 @@ export default defineConfig(async ({ mode }) => {
       vueJsx(),
       VitePWA({
         registerType: 'autoUpdate',
-        selfDestroying: true,
         devOptions: {
           enabled: true,
         },
