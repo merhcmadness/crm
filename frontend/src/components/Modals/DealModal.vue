@@ -232,7 +232,7 @@ function openQuickEntryModal() {
   nextTick(() => (show.value = false))
 }
 
-onMounted(() => {
+onMounted(async () => {
   deal.doc.no_of_employees = '1-10'
   Object.assign(deal.doc, props.defaults)
 
@@ -241,6 +241,29 @@ onMounted(() => {
   }
   if (!deal.doc.status && dealStatuses.value[0].value) {
     deal.doc.status = dealStatuses.value[0].value
+  }
+
+  if (deal.doc.organization) {
+    chooseExistingOrganization.value = true
+
+    // Auto-fill the first contact linked to this organization
+    try {
+      const res = await createResource({
+        url: 'frappe.client.get_list',
+        params: {
+          doctype: 'Contact',
+          filters: { company_name: deal.doc.organization },
+          fields: ['name'],
+          limit: 1,
+          order_by: 'modified desc',
+        },
+        auto: true,
+      }).promise
+      if (res && res.length) {
+        deal.doc.contact = res[0].name
+        chooseExistingContact.value = true
+      }
+    } catch (_) {}
   }
 })
 </script>
